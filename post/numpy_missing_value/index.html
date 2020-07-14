@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>NumPy 中的缺测值处理 | 炸 鸡 人</title>
+<meta name="description" content="炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1594715410359">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://ZhaJiMan.github.io">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1594715410359" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://ZhaJiMan.github.io">
+        <h1 class="site-title">炸 鸡 人</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+            <div class="feature-container" style="background-image: url('https://ZhaJiMan.github.io/post-images/numpy_missing_value.jpg')">
+            </div>
+          
+          <h2 class="post-title">NumPy 中的缺测值处理</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2020-07-13</span>
+            
+          </div>
+          <div class="post-content">
+            <p>现实中观测的数据或多或少会有缺失的部分，通常称为缺测值（missing value）。NumPy 中对于缺测值的处理有两种实现：NaN 和 masked array。下面便来依次介绍它们。</p>
+<h2 id="nan">NaN</h2>
+<p>NaN（not a number）由 IEEE 754 浮点数标准首次引入，是一种特殊的浮点数，用于表示未定义或不可表示的值（即缺测）。NaN 的位模式（bitpattern）是符号位任意，阶码全为 1，尾数最高位表示 NaN 类型，尾数剩余的位不全为 0。作为对比，无穷大的位模式是，符号位决定无穷的正负，阶码全为 1，尾数全为 0。</p>
+<p>NumPy 中用<code>np.nan</code>表示一个 NaN，我们可以把数组中的元素赋值为<code>np.nan</code>，以表示该元素缺测。NaN 的特点如下</p>
+<ul>
+<li>NaN 是一种特殊的浮点数，它可以是 float32 或 float64，但是通常没有其它类型的 NaN。所以不要尝试给整数类型的数组元素赋值为 NaN，不然会发生类型错误。</li>
+<li>当 NaN 参与结果依赖于输入的运算时，结果也会变为 NaN。例如 NaN 参与加减乘除时，会导致结果为 NaN，但像<code>np.logical_or(True, np.nan)</code>这样的短路运算，结果会为<code>True</code>。</li>
+<li>由于 NaN 的位模式的任意性，一般来说<code>np.nan == np.nan</code>的结果为<code>False</code>。要判断数组中是否含有 NaN 的话，有专门的函数<code>np.isnan</code>来进行判断。</li>
+<li>当把数组中的元素赋值为 NaN 时，会直接覆盖掉该元素原有的值。</li>
+</ul>
+<p>一般我们得到的原始数据中的缺测值不会直接用 NaN 表示，而是会用人为给定的填充值（fill value）表示，例如用 -9999 指示某个数据缺测。在读取为 ndarray 后，为了避免这些 -9999 参与计算，需要把它们赋值为 NaN，此时可以用<code>np.isclose</code>函数来筛选出填充值</p>
+<pre><code class="language-Python">fill_value = -9999.0
+flag = np.isclose(data, fill_value)
+data[flag] = np.nan
+</code></pre>
+<p>有时我们需要利用数据中剩下的有效数据进行计算，那么便需要忽略（ignore）这些缺测值。实现方法有两种，一是利用<code>np.isnan</code>函数筛选出有效值，再进行计算</p>
+<pre><code class="language-Python">data_valid = data[~np.isnan(data)]
+mean_value = np.mean(data_valid)
+</code></pre>
+<p>二是使用一些针对 NaN 设计的特殊函数</p>
+<pre><code class="language-Python">mean_value = np.nanmean(data)
+std_value = np.nanstd(data)
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://ZhaJiMan.github.io/post-images/1594647159563.PNG" alt="NumPy 中用来处理 NaN 的函数" loading="lazy"></figure>
+<p>遗憾的是这些特殊函数的数量那可是相当的少。而 NumPy 的大部分普通函数在计算含 NaN 的数组时，结果要么是 NaN，要么就是直接报错。所以要进行更复杂的计算的话，还是得提前筛选出有效值。</p>
+<h2 id="masked-array">Masked Array</h2>
+<p>NumPy 中对缺测值还有另一种实现——masked array。思路是创建一个和 data 数组同样形状的布尔类型 mask 数组，两个数组的元素一一对应，若 mask 数组中某个位置的元素值为<code>True</code>，那么 data 数组中同样位置的元素则被判定为 masked（即缺测）；若值为<code>False</code>，则表示 data 数组中的元素保留原始值。</p>
+<p>data 数组和 mask 数组打包而成的对象就称作 masked array，属于 ndarray 的子类，继承了许多 ndarray 的方法。NumPy 中的<code>ma</code>模块提供了创建和操作 masked array 的功能。</p>
+<p>masked array 的特点如下</p>
+<ul>
+<li>对整型、浮点型、布尔型数组都适用，因为 mask 数组并不依赖于 NaN 的方法。</li>
+<li>masked array 在进行加减乘除计算后，结果不会是 NaN，而是缺测的元素位置依旧保持缺测状态。</li>
+<li>能够记录给定的填充值。</li>
+<li><code>ma</code>模块提供大量能够忽略缺测值的计算函数。</li>
+</ul>
+<p>下面介绍使用 masked array 的基本方法</p>
+<pre><code class="language-Python">import numpy.ma as ma
+
+# 直接给出原始数组和mask来创建masked array
+x = ma.array([1, 2, 3], mask=[True, False, False])
+# 返回原始数组
+x.data
+# 返回mask数组
+x.mask
+# 指定填充值
+x.fill_value = -9999
+
+# 把data中数值等于fill_value的元素设为masked状态,并指定填充值为fill_value
+x = ma.masked_equal(data, fill_value)
+# 同上,但是内部使用了np.isclose方法,更适用于浮点数
+x = ma.masked_values(data, fill_value)
+# 把data中数值大于/小于(等于)fill_value的元素设为masked状态
+# 填充值会被设定为默认值
+x = ma.masked_greater(data, value)
+x = ma.masked_greater_equal(data, value)
+x = ma.masked_less(data, value)
+x = ma.masked_less_equal(data, value)
+# 用条件式决定是否masked
+# 填充值会被设定为默认值
+x = ma.masked_where(data &gt; 0, data)
+# 把有NaN的位置mask掉
+x = ma.masked_invalid(data)
+
+# 忽略缺测值使用函数
+mean_value = ma.mean(x)
+cos_value = ma.cos(x)
+
+# 从masked array中提取出有效值,返回一维的ndarray
+x_valid = x[~x.mask]
+x_valid = x.compressed()
+# 用fill_value填充masked的元素,返回原始形状的ndarray
+y = x.filled()
+</code></pre>
+<p>计算中我们会发现，似乎被 masked 的元素会一直保持最初的值，但是这一行为并不适用于所有操作，所以要保留原值的话，就不要进行太复杂的计算。</p>
+<p>下面再来讲讲如何修改 mask。首先可以直接修改 mask 数组的数值。又或者，可以用模块中的<code>ma.masked</code>来进行修改，这是一个可以设置元素 masked 的对象</p>
+<pre><code class="language-Python"># 把第一个元素设为 masked
+x[0] = ma.masked
+</code></pre>
+<p>需要注意，模块中还存在一个<code>ma.nomask</code>量，但它本质上是布尔类型的<code>False</code>，所以不要用它来做上面的操作，否则会导致元素的数值直接变为 0。</p>
+<p>除此之外，还有一种方法是直接给 masked 的元素赋值，这样会让元素不再缺测，但如果 masked array 的<code>hard_mask</code>参数为<code>True</code>的话（默认为<code>False</code>），会拒绝这样的直接改写。个人觉得最好不要这样直接改写，所以对此有需求的读者可以参考 NumPy 文档的说明。</p>
+<p>最后讲两个使用过程中很坑的地方，不感兴趣的读者可以跳过。</p>
+<ul>
+<li>例如对于一个 masked array，<code>x</code>，我们可能会认为<code>x&gt;1</code>返回的布尔数组表示的是<code>x</code>中那些大于 1 的<strong>有效值</strong>。但实际上，<code>x&gt;1</code>也是个 masked array，它会包含处于 masked 状态的<code>True</code>。于是<code>x[x&gt;1]</code>中会含有原始数值大于 1 的缺测值，想只保留有效值的话需要再用<code>x[x&gt;1].compressed()</code>之类的方法。</li>
+<li>如果想避开缺测值来修改一个 masked array 的数值，如上面所述，直接赋值是会作用到缺测值上的。所以这样的操作需要通过<code>ma.where</code>函数来进行。</li>
+</ul>
+<h2 id="两种方法的对比">两种方法的对比</h2>
+<p>首先指出 masked array 相比 NaN 方法的优势</p>
+<ul>
+<li>把数据、缺测值位置，和填充值打包到了一起，当数组特别多时，更加易于管理。</li>
+<li>用于处理 masked array 的函数远多于处理 NaN 的函数。</li>
+<li>可以不只是用于缺测值，我们可以先遮盖（mask）掉一些暂时不需要考虑的值，只要不经过复杂的运算，那么这些被遮盖的值会一直被保留，方便之后重新提取出来。</li>
+</ul>
+<p>但是 masked array 的缺点也是显而易见的</p>
+<ul>
+<li>多附带了一个布尔数组，增加了内存的消耗。</li>
+<li>计算上会更慢。</li>
+</ul>
+<p>下面就举一个测试计算速度的例子</p>
+<pre><code class="language-Python">import numpy as np
+import numpy.ma as ma
+
+x = np.random.rand(1000, 1000)
+flag = np.random.randint(0, 2, (1000, 1000))
+
+# 设置NaN数组
+x_nan = x.copy()
+x_nan[flag] = np.nan
+
+# 设置masked array
+x_mask = ma.array(x, mask=flag)
+</code></pre>
+<p>接着用 IPython 的命令进行测试</p>
+<figure data-type="image" tabindex="2"><img src="https://ZhaJiMan.github.io/post-images/1594711929733.png" alt="" loading="lazy"></figure>
+<p>可以看到计算速度慢上 6 倍之多。我并没有在网上看到有谁说更推荐哪一种实现，所以只能这样认为，我们要在便利和速度间做取舍，选择适合自己的缺测值处理方式。</p>
+<h2 id="还有别的处理方式吗">还有别的处理方式吗？</h2>
+<p>pandas 能方便地处理含缺测值的一维序列，许多函数都带有<code>skipna</code>选项。而对于多维数组，xarray 提供了与 pandas 类似的处理方式。由于我都不熟，所以这里没法展开。如果有谁会了可以来教我（认真）。</p>
+<h2 id="matplotlib-中的缺测值">Matplotlib 中的缺测值</h2>
+<p>如果是使用简单的<code>plt.plot</code>命令，NaN 或者 masked value 的点会被认为数据在那里断开了，效果如下图</p>
+<figure data-type="image" tabindex="3"><img src="https://ZhaJiMan.github.io/post-images/1594708727160.jpg" alt="" loading="lazy"></figure>
+<p>对于<code>plt.imshow</code>、<code>plt.pcolor</code>，和<code>plt.pcolormesh</code>，它们绘制的是色块，NaN 或者 masked value 所在的色块默认为透明的。如果要用颜色指示出缺测值，需要调整 colormap 的设置</p>
+<pre><code class="language-Python">from copy import copy
+# 使用copy以免影响全局的colormap
+cmap = copy(plt.cm.viridis)
+# 设置缺测值的颜色和透明度
+cmap.set_bad('gray', 1.0)
+</code></pre>
+<p>下面的例子中，缺测值的颜色被设定成蓝色</p>
+<figure data-type="image" tabindex="4"><img src="https://ZhaJiMan.github.io/post-images/1594709516023.png" alt="" loading="lazy"></figure>
+<p>以上两个例子都来自 Matplotlib 官网，代码见文末的参考链接。</p>
+<p>而对于填色图<code>plt.contourf</code>，缺测值区域不会被画出，并且不可指定颜色。聊胜于无的是，可以通过<code>corner_mask</code>参数指定缺测区域的边角画法。还是建议经过插值等处理后再来画填色图吧。</p>
+<h2 id="参考链接">参考链接</h2>
+<p><a href="https://docs.scipy.org/doc/numpy-1.13.0/neps/missing-data.html">Missing Data Functionality in NumPy</a><br>
+<a href="https://en.wikipedia.org/wiki/NaN">NaN Wikipedia</a><br>
+<a href="https://numpy.org/doc/stable/reference/maskedarray.generic.html">The numpy.ma module</a><br>
+<a href="https://stackoverflow.com/questions/55987642/why-are-numpy-masked-arrays-useful">Why are Numpy masked arrays useful?</a><br>
+<a href="https://matplotlib.org/3.2.1/gallery/images_contours_and_fields/contourf_demo.html">Matplotlib: Contour Demo</a><br>
+<a href="https://matplotlib.org/3.2.2/gallery/lines_bars_and_markers/masked_demo.html">Matplotlib: Plotting masked and NaN values</a><br>
+<a href="https://matplotlib.org/3.2.2/gallery/images_contours_and_fields/image_masked.html">Matplotlib: Image Masked</a></p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://ZhaJiMan.github.io/post/read_satellite_data/">
+              <h3 class="post-title">
+                下一篇：用 Python 读取常见卫星数据格式（持续更新中）
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+        
+          <div id="gitalk-container"></div>
+        
+
+        
+      
+
+      <div class="site-footer">
+  <div class="slogan">炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://ZhaJiMan.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'd3e98a2219dd32298c8a',
+        clientSecret: '04b6ce88dc40c267a998b38f9b245b259b91dc2b',
+        repo: 'ZhaJiMan.github.io',
+        owner: 'ZhaJiMan',
+        admin: ['ZhaJiMan'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>用 Python 读取常见卫星数据格式（持续更新中） | 炸 鸡 人</title>
+<meta name="description" content="炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1594715410359">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://ZhaJiMan.github.io">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1594715410359" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://ZhaJiMan.github.io">
+        <h1 class="site-title">炸 鸡 人</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+            <div class="feature-container" style="background-image: url('https://ZhaJiMan.github.io/post-images/read_satellite_data.jpg')">
+            </div>
+          
+          <h2 class="post-title">用 Python 读取常见卫星数据格式（持续更新中）</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2020-07-12</span>
+            
+          </div>
+          <div class="post-content">
+            <p>NCL 读取各种卫星数据仅需一行命令，且会自动处理缺测值和缩放。但如果想用 Python 来读取数据，则需要依赖多个独立的库，更头疼的是，它们的调用方法差别很大，需要分别去官方文档学习。这里就总结一下那些最基础最有用的调用方法，以便以后抄来用。同时在这里建议，在读取任何数据前，先用 NASA 的 Panoply 软件操弄一番，直观地看看需要的量叫什么、有哪些属性。</p>
+<h2 id="modis">MODIS</h2>
+<p>MODIS 采用的格式是基于 HDF4 的 HDF-EOS2，这是 NASA 专门为 EOS（Earth Observing System）系列卫星设计的数据格式。相比于标准的 HDF4，HDF-EOS2 引入了新的数据类型（point、grid，和 swath），并且能让用户根据地理信息读取数据。</p>
+<figure data-type="image" tabindex="1"><img src="https://ZhaJiMan.github.io/post-images/1594522535571.png" alt="" loading="lazy"></figure>
+<p>Python 中可以用 <a href="http://fhs.github.io/pyhdf/">pyhdf</a> 库来读取 MODIS 的数据。首先需要引入<code>SD</code>模块中的<code>SD</code>和<code>SDC</code>类</p>
+<pre><code class="language-Python">from pyhdf.SD import SD, SDC
+</code></pre>
+<p><code>SD</code>（scientific dataset）模块提供了对 HDF4 的科学数据集（Scientific Data Set，SDS）的 API。所谓 SDS 其实就相当于 numpy 数组，只不过还附有相应的属性。<code>SD</code>类能够打开、关闭文件，<code>SDC</code>类存有关于文件读写模式、数据类型的常量。下面介绍一些常用的用于读取的功能</p>
+<pre><code class="language-Python"># 读取文件
+f = SD(file_name, SDC.READ)
+# 返回一个二元元组,指示文件含有的数据集数量,以及属性的数量
+f.info()
+# 返回包含文件全局属性的词典
+f.attributes()
+# 返回文件中所有数据集的名字以及对应形状,类型,序号的词典
+f.datasets()
+# 用序号或者名字来定位数据集,返回一个SDS类
+sds = f.select(sdsname)
+
+# 可以用numpy的操作来从数据集中提取数组
+data = sds[:]
+# 返回关于维度的词典
+dims = sds.dimensions()
+# 返回含有所有属性的词典
+attrs = sds.attributes()
+
+# 关闭文件,记得放在最后以免报错
+f.end()
+</code></pre>
+<p>直接用 pyhdf 提取的数组既没有对缺测值进行 mask 处理，也没有做缩放处理，我们需要手动进行处理。下面以 MYD04_L2 的数据为例</p>
+<pre><code class="language-Python">fill_value = attrs['_FillValue']
+scale_factor = attrs['scale_factor']
+add_offset = attrs['add_offset']
+
+data = np.ma.masked_values(data, fill_value)
+data = (data - add_offset) * scale_factors
+</code></pre>
+<p><strong>参考链接</strong><br>
+<a href="https://www.cnblogs.com/94cool/archive/2013/06/28/3160249.html">HDF及HDF-EOS数据格式简介</a><br>
+<a href="http://www.ncl.ucar.edu/Applications/HDF.shtml">NCL: HDF</a><br>
+<a href="https://atmosphere-imager.gsfc.nasa.gov/products/aerosol/format-content">MODIS Aerosol Product Fromat &amp; Content</a><br>
+<a href="https://moonbooks.org/Articles/How-to-read-a-MODIS-HDF-file-using-python-/">How to read a MODIS HDF4 file using python and pyhdf ?</a><br>
+<a href="http://fhs.github.io/pyhdf/modules/SD.html">pyhdf SD API</a></p>
+<h2 id="gpm-dpr-gmi">GPM DPR &amp; GMI</h2>
+<p>GPM 核心卫星上搭载的 DPR 和 GMI 都采用 HDF5 作为数据产品的格式，相比于上一代的 HDF4，HDF5 有容量更大、数据类型更完善、并行支持更佳等优势，不过这两种格式互不兼容。</p>
+<p>Python 中可以用 <a href="http://docs.h5py.org/en/stable/">h5py</a> 库来读取 HDF5 文件。一个 HDF5 文件主要由数据集（dataset）和组（group）两种对象组成，数据集就相当于 numpy 数组，组则相当于给数据分类的文件夹（或路径）。下面举一些读取的例子</p>
+<pre><code class="language-Python">import h5py
+
+# 读取文件,返回一个文件对象.f相当于根路径&quot;/&quot;代表的组
+f = h5py.File(file_name, 'r')
+# 文件的属性,返回类似于词典的对象
+f_attrs = f.attrs
+# 打印出文件含有的子组名
+print(list(f.keys()))
+# 可以用相对路径或绝对路径的字符串索引子组
+# 子组的操作跟文件类似,这里不赘述
+grp = f['/group']
+
+# 直接从文件索引数据集
+dset = f['/group/dataset']
+# 可以用numpy操作提取出数组
+data = dset[:]
+# 数据集的属性,返回类似于词典的对象
+attrs = dset.attrs
+fill_value = attrs['_FillValue']
+</code></pre>
+<p>值得注意的是，在 h5py 中，文件、组，和属性都是类似于词典的对象，可以活用<code>keys()</code>、<code>values()</code>、<code>items()</code> 等方法，还可以直接索引键名来进行探索。另外 h5py 不包含 masked array 的功能，需要手动处理。</p>
+<p><strong>参考链接</strong><br>
+<a href="http://docs.h5py.org/en/stable/index.html">h5py docs</a><br>
+<a href="https://support.hdfgroup.org/products/hdf5_tools/h4toh5/h4vsh5.html">HDF VS. HDF5</a><br>
+<a href="https://earthdata.nasa.gov/esdis/eso/standards-and-references/hdf5">HDF5 Data Model, File Format and Library—HDF5 1.6</a></p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://ZhaJiMan.github.io/post/great_circle_distance/">
+              <h3 class="post-title">
+                下一篇：地球上两点之间的距离
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+        
+          <div id="gitalk-container"></div>
+        
+
+        
+      
+
+      <div class="site-footer">
+  <div class="slogan">炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://ZhaJiMan.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'd3e98a2219dd32298c8a',
+        clientSecret: '04b6ce88dc40c267a998b38f9b245b259b91dc2b',
+        repo: 'ZhaJiMan.github.io',
+        owner: 'ZhaJiMan',
+        admin: ['ZhaJiMan'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

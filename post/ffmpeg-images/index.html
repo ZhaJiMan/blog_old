@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>用 FFmpeg 把图片转为视频 | 炸 鸡 人</title>
+<meta name="description" content="炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1594715410359">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://ZhaJiMan.github.io">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1594715410359" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://ZhaJiMan.github.io">
+        <h1 class="site-title">炸 鸡 人</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+            <div class="feature-container" style="background-image: url('https://ZhaJiMan.github.io/post-images/ffmpeg-images.png')">
+            </div>
+          
+          <h2 class="post-title">用 FFmpeg 把图片转为视频</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2019-12-18</span>
+            
+          </div>
+          <div class="post-content">
+            <h3 id="imagemagick-方法">ImageMagick 方法</h3>
+<p>要把一系列带编号的、分辨率相同的图片转化为动图，我之前采用的方法是通过 Linux 下的 <code>convert</code> 命令（在 Windows 下就是 <code>magick</code>）来输出动图</p>
+<pre><code>convert -delay 50 *.png -loop 0 out.gif
+convert -layers Optimize out.gif out_opt.gif
+</code></pre>
+<p><code>-delay 50</code>：延迟 50*10 ms，即 0.5 秒 一张图，fps 为 2。<br>
+<code>-loop 0</code>：循环播放 n 轮，n=0 表示无限循环。<br>
+<code>-layers Optimize</code>：对 gif 图的每一层采用 Optimize 方法进行优化，能够稍微降低文件体积。</p>
+<p>但是当原有的 png 图片很大时，得到的 gif 体积会很大，并且图片很多时，处理速度也会很慢。而使用 FFmpeg 的话，处理速度和文件体积都会大幅改善。因此下面介绍 FFmpeg 把图片转为视频的方法。</p>
+<p>关于 ImageMagick 的详细用法见<br>
+<a href="https://www.cnblogs.com/lfri/p/11601211.html">ImageMagick 的安装及使用</a><br>
+<a href="https://blog.csdn.net/qwsamxy/article/details/50530900">【ImageMagick】用convert制作gif图片动画</a></p>
+<h3 id="ffmpeg-方法">FFmpeg 方法</h3>
+<p>FFmpeg 是一套专门用于处理音频和视频的开源程序，Windows 和 Linux 下均可下载。这里介绍其中的命令行工具 <code>ffmpeg</code> 的方法。图片转视频的命令为</p>
+<pre><code>ffmpeg -f image2 -pattern_type glob -framerate 20 -i '*.png' -c:v libx264 -pix_fmt yuv420p -s 800x800 out.mp4
+</code></pre>
+<p><code>-f image2</code>：指定输入输出文件的格式，这里为图片文件指定了 image2。一般来说 FFmpeg 会自动推断文件类型，这个选项可以忽略。<br>
+<code>-pattern_type glob</code>：指定 image2 接收到的图片名字的模式。这里选用 glob，能够支持通配符（即 *）的使用。<br>
+<code>framerate 20</code>：设置视频流的帧率（frames per second），这里为每秒 20 张图。<br>
+<code>-i</code>：这个选项后接输入文件的名字。<br>
+<code>-c:v libx264</code>：<code>-c</code> 能指定输出（输入）的编码（解码）方式。<code>-c:v</code> 指定源为视频（video）源，由于放在输入的图片名后面，所以这里是为输出的视频指定 x264 编码器。这个编码输出的视频效果比没有指定 <code>-c</code> 选项的默认情况要强不少。<br>
+<code>-pix_fmt yuv420p</code>：指定像素的色彩格式为 yuv420p。默认情况下是 yuv444p，画面似乎更好，但文件体积也会增大一些。<br>
+<code>-s 800x800</code>：指定输出视频的分辨率为 800x800（宽x高）。可以通过降低分辨率的方法缩小视频体积。<br>
+<code>-vf scale=iw/2:ih/2</code>：除了上面提到的 <code>-s</code> 方法，还可以用 scale filter 按输入图片的分辨率（iw 和 ih）等比例缩放。例如这里指定分辨率缩减为一半。</p>
+<p>使用上面的命令就能快速生成动态的视频。更多参数和用法可以参考<br>
+<a href="https://ffmpeg.org/ffmpeg.html">ffmpeg Documentation</a><br>
+<a href="https://ffmpeg.org/ffmpeg-formats.html#image2-1">FFmpeg Formats Documentation</a><br>
+<a href="http://einverne.github.io/post/2015/12/ffmpeg-first.html">ffmpeg 入门笔记</a></p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://ZhaJiMan.github.io/post/spectral/">
+              <h3 class="post-title">
+                下一篇：猴子也能懂的频谱分析入门
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+        
+          <div id="gitalk-container"></div>
+        
+
+        
+      
+
+      <div class="site-footer">
+  <div class="slogan">炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://ZhaJiMan.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'd3e98a2219dd32298c8a',
+        clientSecret: '04b6ce88dc40c267a998b38f9b245b259b91dc2b',
+        repo: 'ZhaJiMan.github.io',
+        owner: 'ZhaJiMan',
+        admin: ['ZhaJiMan'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

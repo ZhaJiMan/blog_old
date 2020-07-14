@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>在Windows的命令行中调用Conda环境 | 炸 鸡 人</title>
+<meta name="description" content="炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1594715410359">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://ZhaJiMan.github.io">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1594715410359" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://ZhaJiMan.github.io">
+        <h1 class="site-title">炸 鸡 人</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+            <div class="feature-container" style="background-image: url('https://ZhaJiMan.github.io/post-images/conda.png')">
+            </div>
+          
+          <h2 class="post-title">在Windows的命令行中调用Conda环境</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2019-08-22</span>
+            
+          </div>
+          <div class="post-content">
+            <h3 id="问题">问题</h3>
+<p>在Windows平台用Python做科学计算时，为了解决包的依赖问题，往往要利用Conda来建立和管理Python的环境。安装好Anaconda或Miniconda后，便可以在开始菜单中通过快捷方式<code>Anaconda Powershell Prompt</code>或者<code>Anaconda Prompt</code>，在命令行中直接进入Conda的base环境。</p>
+<figure data-type="image" tabindex="1"><img src="https://ZhaJiMan.github.io/post-images/1566442041726.png" alt="" loading="lazy"></figure>
+<p>但是Windows命令行的终端界面实在令人无法恭维，可选择的字体非常少，在这样简陋的环境下工作实在有些难受。如果选用其它好看的终端，又没办法直接使用Conda的相关命令。因此本文的目的便是想在第三方的终端中正常使用Conda环境。</p>
+<h3 id="解决方案">解决方案</h3>
+<p>首先说说在网上查到的解决方案：往系统的环境变量Path中添加路径<code>C:\Anaconda3</code>和<code>C:\Anaconda3\Scripts\</code>（具体路径根据你自己的安装路径）。这样操作后再打开PowerShell，确实能直接呼出Conda命令了，原理是因为Conda.exe就存放在<code>\Scripts</code>路径下。然而我又遇到了问题：还是没办法激活设置好的虚拟环境。因此我怀疑添加的这两个路径并不能让Conda完整地运作。</p>
+<figure data-type="image" tabindex="2"><img src="https://ZhaJiMan.github.io/post-images/1566442123961.png" alt="" loading="lazy"></figure>
+<p>我给出的办法是，以文章开头提到的那两个快捷方式为切入点来进行设置。先在开始菜单中找到快捷方式<code>Anaconda Powershell Prompt</code>，如上图，在右键的菜单中打开快捷方式所在的文件夹。接着在文件夹中右键查看快捷方式的属性。</p>
+<figure data-type="image" tabindex="3"><img src="https://ZhaJiMan.github.io/post-images/1566442280781.png" alt="" loading="lazy"></figure>
+<p>属性中目标一栏即是该快捷方式在命令行中具体执行的命令，把它复制出来，即：</p>
+<pre><code>%windir%\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy ByPass -NoExit -Command &quot;&amp; 'C:\python\miniconda\shell\condabin\conda-hook.ps1' ; conda activate 'C:\python\miniconda' &quot;
+</code></pre>
+<p>但是在PowerShell中，这个命令还是会报错，会提示找不到<code>%windir%</code>。那么便把<code>powershell.exe</code>命令前面的路径统统去掉，把命令改为：</p>
+<pre><code>powershell.exe -ExecutionPolicy ByPass -NoExit -Command &quot;&amp; 'C:\python\miniconda\shell\condabin\conda-hook.ps1' ; conda activate 'C:\python\miniconda' &quot;
+</code></pre>
+<p>这下子便能在PowerShell中正常运行这个命令，并顺利进入Conda的base环境。同时这也说明，Conda提供的快捷方式无非就是把命令打包罢了。为了简化操作，不用每次输入这么长的命令，接下来为这一长串命令设置别名。</p>
+<p>在PowerShell中，设置别名的命令为<code>Set-Alias</code>（或者简写为<code>gal</code>），例如通过命令：</p>
+<pre><code>Set-Alias list Get-ChildItem
+</code></pre>
+<p>便能让别名<code>list</code>有列出当前路径文件的能力。然而在一个会话中直接用<code>Set-Alias</code>设置的别名会在当前会话关闭后失效，下一次打开命令行时别名就用不了了。所以这里要创建永久的别名。方法是把我们需要的别名写入Windows PowerShell profile文件中。</p>
+<p>一般来说这个文件在创建之前是不存在的，所以用以下的命令来创建这个文件：</p>
+<pre><code>New-Item -Type file -Force $profile
+</code></pre>
+<p>创建后通过命令<code>$profile</code>查看该文件在计算机中的位置，一般该文件会在<code>C:\Users\USER\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1</code>路径下。通过编辑器打开该文件，会发现文件是空白的，然后把需要的别名写入文件：</p>
+<pre><code>function enter_conda{
+	powershell.exe -ExecutionPolicy ByPass -NoExit -Command &quot;&amp; 'C:\python\miniconda\shell\condabin\conda-hook.ps1' ; conda activate 'C:\python\miniconda' &quot;
+}
+Set-Alias conda enter_conda
+</code></pre>
+<p>因为我们的命令含有空格和参数，所以用function来包裹这个命令，再为function来设置别名<code>conda</code>。但是此时打开PowerShell，会弹出错误“无法加载文件C:\XXX\WindowsPowerShell\profile.ps1，因为在此系统上禁止运行脚本” 。这是Windows出于安全考虑对脚本采取的默认限制。为了解除这一限制，用管理员身份打开PowerShell，执行命令<code>set-ExecutionPolicy RemoteSigned</code>即可。</p>
+<p>于是所有的工作都搞定，在终端软件Termius中测试一下，直接输入<code>conda</code>，并测试一下功能：</p>
+<figure data-type="image" tabindex="4"><img src="https://ZhaJiMan.github.io/post-images/1566445046972.png" alt="" loading="lazy"></figure>
+<p>可以看到一切正常。终于可以在任意一个PowerShell终端中愉快地使用Conda的全部功能了。</p>
+<h3 id="参考网址">参考网址</h3>
+<ol>
+<li><a href="https://stackoverflow.com/questions/44597662/conda-command-is-not-recognized-on-windows-10">Conda command is not recognized on Windows 10</a></li>
+<li><a href="https://segmentfault.com/a/1190000015928399">PowerShell设置命令别名Alias</a></li>
+<li><a href="https://www.cnblogs.com/WMT-Azura/p/11137972.html">打开终端，提示 “无法加载文件C:\XXX\WindowsPowerShell\profile.ps1，因为在此系统上禁止运行脚本” 的错误</a></li>
+</ol>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://ZhaJiMan.github.io/post/FriedChickenMan/">
+              <h3 class="post-title">
+                下一篇：炸 鸡 人
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+        
+          <div id="gitalk-container"></div>
+        
+
+        
+      
+
+      <div class="site-footer">
+  <div class="slogan">炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://ZhaJiMan.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'd3e98a2219dd32298c8a',
+        clientSecret: '04b6ce88dc40c267a998b38f9b245b259b91dc2b',
+        repo: 'ZhaJiMan.github.io',
+        owner: 'ZhaJiMan',
+        admin: ['ZhaJiMan'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

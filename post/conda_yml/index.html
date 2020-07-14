@@ -1,0 +1,322 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>导出和导入 Conda 环境，以及常用配置 | 炸 鸡 人</title>
+<meta name="description" content="炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1594715410359">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://ZhaJiMan.github.io">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1594715410359" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://ZhaJiMan.github.io">
+        <h1 class="site-title">炸 鸡 人</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+            <div class="feature-container" style="background-image: url('https://ZhaJiMan.github.io/post-images/conda_yml.png')">
+            </div>
+          
+          <h2 class="post-title">导出和导入 Conda 环境，以及常用配置</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2019-09-12</span>
+            
+          </div>
+          <div class="post-content">
+            <p>首先<code>conda activate &lt;envname&gt;</code>，进入相应的环境。然后导出环境</p>
+<pre><code>conda env export &gt; environment.yml
+</code></pre>
+<p>生成 yml 配置文件。以后导入时，直接在 base 环境下执行</p>
+<pre><code>conda env create -f environment.yml
+</code></pre>
+<p>即可。如果有冲突，可以尝试删去相应库的版本号。<br>
+以下是常用配置</p>
+<pre><code>name: meteo
+channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - conda-forge
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+  - defaults
+dependencies:
+  - asn1crypto=0.24.0=py37_1003
+  - attrs=19.1.0=py_0
+  - backcall=0.1.0=py_0
+  - blas=1.0=mkl
+  - bokeh=1.2.0=py37_0
+  - bottleneck=1.2.1=py37h452e1ab_1001
+  - bzip2=1.0.6=hfa6e2cd_1002
+  - ca-certificates=2019.6.16=hecc5488_0
+  - cartopy=0.17.0=py37h814cdbc_1004
+  - certifi=2019.6.16=py37_1
+  - cffi=1.12.3=py37hb32ad35_0
+  - cftime=1.0.3.4=py37h452e1ab_1001
+  - chardet=3.0.4=py37_1003
+  - click=7.0=py_0
+  - cloudpickle=1.2.1=py_0
+  - colorama=0.4.1=py_0
+  - cryptography=2.7=py37hb32ad35_0
+  - curl=7.65.1=h4496350_0
+  - cycler=0.10.0=py_1
+  - cytoolz=0.9.0.1=py37hfa6e2cd_1001
+  - dask=2.0.0=py_0
+  - dask-core=2.0.0=py_0
+  - decorator=4.4.0=py_0
+  - distributed=2.0.1=py_0
+  - eccodes=2.12.3=vc14hfc2cf60_1
+  - freetype=2.10.0=h5db478b_0
+  - geos=3.7.1=h33f27b4_0
+  - h5py=2.9.0=nompi_py37h3cb27cb_1102
+  - hdf4=4.2.13=hf8e6fe8_1002
+  - hdf5=1.10.4=nompi_hcc15c50_1106
+  - heapdict=1.0.0=py37_1000
+  - icc_rt=2019.0.0=h0cc432a_1
+  - icu=58.1=vc14_0
+  - idna=2.8=py37_1000
+  - intel-openmp=2019.4=245
+  - ipython=7.5.0=py37h39e3cac_0
+  - ipython_genutils=0.2.0=py_1
+  - jedi=0.14.0=py37_0
+  - jinja2=2.10.1=py_0
+  - jpeg=9c=hfa6e2cd_1001
+  - kiwisolver=1.1.0=py37he980bc4_0
+  - krb5=1.16.3=hdd46e55_1001
+  - libblas=3.8.0=8_mkl
+  - libcblas=3.8.0=8_mkl
+  - libcurl=7.65.1=h4496350_0
+  - libiconv=1.15=h1df5818_7
+  - liblapack=3.8.0=8_mkl
+  - libnetcdf=4.6.2=h396784b_1001
+  - libpng=1.6.37=h7602738_0
+  - libssh2=1.8.2=h642c060_2
+  - libtiff=4.0.10=h6512ee2_1003
+  - libxml2=2.9.9=h464c3ec_0
+  - libxslt=1.1.33=h579f668_0
+  - locket=0.2.0=py_2
+  - lxml=4.4.1=py37h1350720_0
+  - lz4-c=1.8.3=he025d50_1001
+  - markupsafe=1.1.1=py37hfa6e2cd_0
+  - matplotlib=3.1.0=py37_1
+  - matplotlib-base=3.1.0=py37h2852a4a_1
+  - mkl=2019.4=245
+  - msgpack-python=0.6.1=py37he980bc4_0
+  - netcdf4=1.5.1.2=py37h2b7c3b1_0
+  - numpy=1.17.1=py37hc71023c_0
+  - olefile=0.46=py_0
+  - openssl=1.1.1c=hfa6e2cd_0
+  - owslib=0.18.0=py_0
+  - packaging=19.0=py_0
+  - pandas=0.25.1=py37he350917_0
+  - parso=0.5.0=py_0
+  - partd=1.0.0=py_0
+  - patsy=0.5.1=py_0
+  - pickleshare=0.7.5=py37_1000
+  - pillow=6.0.0=py37h9a613e6_0
+  - pip=19.1.1=py37_0
+  - proj4=5.2.0=h6538335_1003
+  - prompt_toolkit=2.0.9=py_0
+  - psutil=5.6.3=py37hfa6e2cd_0
+  - pycparser=2.19=py37_1
+  - pyepsg=0.4.0=py_0
+  - pygments=2.4.2=py_0
+  - pyhdf=0.10.1=py37hdab8082_1
+  - pykdtree=1.3.1=py37h452e1ab_1002
+  - pyopenssl=19.0.0=py37_0
+  - pyparsing=2.4.0=py_0
+  - pyproj=1.9.6=py37hfa6e2cd_1002
+  - pyqt=5.9.2=py37h6538335_0
+  - pyreadline=2.1=py37_1000
+  - pyshp=2.1.0=py_0
+  - pysocks=1.7.0=py37_0
+  - python=3.7.3=hb12ca83_0
+  - python-dateutil=2.8.0=py_0
+  - pytz=2019.1=py_0
+  - pyyaml=5.1.1=py37hfa6e2cd_0
+  - qt=5.9.7=hc6833c9_1
+  - requests=2.22.0=py37_0
+  - scipy=1.2.1=py37h29ff71c_0
+  - seaborn=0.9.0=py_1
+  - setuptools=41.0.1=py37_0
+  - shapely=1.6.4=py37h7d20962_1005
+  - sip=4.19.8=py37h6538335_1000
+  - six=1.12.0=py37_1000
+  - sortedcontainers=2.1.0=py_0
+  - sqlite=3.28.0=hfa6e2cd_0
+  - statsmodels=0.10.1=py37hfa6e2cd_0
+  - tblib=1.4.0=py_0
+  - tk=8.6.9=hfa6e2cd_1002
+  - toolz=0.9.0=py_1
+  - tornado=6.0.3=py37hfa6e2cd_0
+  - traitlets=4.3.2=py37_1000
+  - urllib3=1.24.3=py37_0
+  - vc=14.1=h0510ff6_4
+  - vs2015_runtime=14.15.26706=h3a45250_4
+  - wcwidth=0.1.7=py_1
+  - wheel=0.33.4=py37_0
+  - win_inet_pton=1.1.0=py37_0
+  - wincertstore=0.2=py37_1002
+  - xarray=0.12.3=py_0
+  - xz=5.2.4=h2fa13f4_1001
+  - yaml=0.1.7=hfa6e2cd_1001
+  - zict=1.0.0=py_0
+  - zlib=1.2.11=h2fa13f4_1004
+  - zstd=1.4.0=hd8a0e53_0
+prefix: C:\python\miniconda\envs\meteo
+</code></pre>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://ZhaJiMan.github.io/post/conda/">
+              <h3 class="post-title">
+                下一篇：在Windows的命令行中调用Conda环境
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+        
+          <div id="gitalk-container"></div>
+        
+
+        
+      
+
+      <div class="site-footer">
+  <div class="slogan">炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://ZhaJiMan.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'd3e98a2219dd32298c8a',
+        clientSecret: '04b6ce88dc40c267a998b38f9b245b259b91dc2b',
+        repo: 'ZhaJiMan.github.io',
+        owner: 'ZhaJiMan',
+        admin: ['ZhaJiMan'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

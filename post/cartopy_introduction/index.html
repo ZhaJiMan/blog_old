@@ -1,0 +1,462 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>Cartopy：从入门到放弃 | 炸 鸡 人</title>
+<meta name="description" content="炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1594715410359">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://ZhaJiMan.github.io">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1594715410359" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://ZhaJiMan.github.io">
+        <h1 class="site-title">炸 鸡 人</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+            <div class="feature-container" style="background-image: url('https://ZhaJiMan.github.io/post-images/cartopy_introduction.png')">
+            </div>
+          
+          <h2 class="post-title">Cartopy：从入门到放弃</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2019-09-14</span>
+            
+          </div>
+          <div class="post-content">
+            <h3 id="cartopy-简介">Cartopy 简介</h3>
+<p><img src="https://ZhaJiMan.github.io/post-images/1568426542667.png" alt="" loading="lazy"><br>
+科研上常用的把数据绘制在地图上的编程工具有 MATLAB、IDL、GrADS、GMT、NCL 等。我之前一直使用的是脚本语言 NCL，易用性不错，画地图的效果也很好。然而2019年初，NCAR 宣布 NCL 将停止更新，并会在日后转为 Python 的绘图包。于是我开始考虑转投 Python，同时觉得在 Python 环境下如果还是用 PyNGL 那一套语法的话，未免有些换汤不换药。因此我选择用 Python 环境下专有的 Cartopy 包来画地图。<br>
+<img src="https://ZhaJiMan.github.io/post-images/1568426854042.png" alt="" loading="lazy"><br>
+此前 Python 最常用的地图包是 Basemap，然而它将于2020年被弃用，官方推荐使用 Cartopy 包作为替代。Cartopy 是英国气象局开发的地图绘图包，实现了 Basemap 的大部分功能，还可以通过 Matplotlib 的 API 实现丰富的自定义效果。</p>
+<p>本文将会从一个 NCL 转 Python 的入门者的角度，介绍如何安装 Cartopy，如何绘制地图，并实现一些常用的效果。</p>
+<p><em>本文写作时 Cartopy 的版本为 0.17.0。</em></p>
+<h3 id="安装-cartopy-和相关的库">安装 Cartopy 和相关的库</h3>
+<p>通过 Conda 来安装 Cartopy 是最为简单方便的。首先我们需要下载最新的 Python 3 的 Conda 环境（Anaconda 或 Miniconda 皆可），设置国内镜像源，建立好虚拟环境，然后参照 Cartopy 官网的<a href="https://scitools.org.uk/cartopy/docs/latest/installing.html#installing">安装说明</a>，执行操作：</p>
+<pre><code>conda install -c conda-forge cartopy
+</code></pre>
+<p>接着便会开始安装 Cartopy，以及 Numpy、Matplotlib 等一系列相关包。Cartopy 的安装就是这么简单。接着还可以考虑去安装 netCDF4、h5py、pyhdf 等支持特定格式读写的包。</p>
+<h3 id="画地图的基本流程">画地图的基本流程</h3>
+<p>以一个简单的例子来说明：</p>
+<pre><code class="language-Python"># 导入所需的库
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+# 创建画布以及轴
+fig = plt.figure()
+ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
+# 调用轴的方法画海岸线
+ax.coastlines()
+plt.show()
+</code></pre>
+<p><img src="https://ZhaJiMan.github.io/post-images/1568440658399.png" alt="" loading="lazy"><br>
+Cartopy 是利用 Matplotlib 来画图的，因此首先要导入<code>pyplot</code>模块。在 Cartopy 中，每种投影都是一个类，被存放在<code>cartopy.crs</code>中，crs 即坐标参考系统（Coordinate Reference Systems）之意。所以接着要导入这个模块。这里选取最常用的等距圆柱投影<code>ccrs.PlateCarree</code>作为地图投影。</p>
+<p>我们知道，Matplotlib 画图是通过调用<code>Axes</code>类的方法来完成的。Cartopy 创造了一个<code>Axes</code>的子类，<code>GeoAxes</code>，它继承了前者的基本功能，还添加了一系列绘制地图元素的方法。生成一个<code>GeoAxes</code>实例的办法是，在创建 axes（或 subplot）时，通过参数<code>projection</code>指定一个<code>ccrs</code>中的投影实例。这里便利用这一方法生成了一个等距圆柱投影下的轴。</p>
+<p>最后调用轴的方法<code>coastlines</code>画出海岸线，默认以本初子午线为中心，比例尺为1cm:1100km。</p>
+<p>因此用 Cartopy 画地图的基本流程并不复杂：</p>
+<ul>
+<li>创建画布。</li>
+<li>通过<code>projection</code>实例化<code>GeoAxes</code>。</li>
+<li>调用<code>Axes</code>或<code>GeoAxes</code>的方法在轴上画图。</li>
+</ul>
+<h3 id="geoaxes-的一些有用的方法">GeoAxes 的一些有用的方法</h3>
+<p><code>GeoAxes</code>有不少有用的方法，这里列举如下：</p>
+<ul>
+<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html#cartopy.mpl.geoaxes.GeoAxes.set_global">set_global</a>：让当前轴的显示范围扩展至投影的最大范围。例如，对<code>PlateCarree</code>投影的轴使用后，地图会变成全球的。</li>
+<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html#cartopy.mpl.geoaxes.GeoAxes.set_extent">set_extent</a>：给出元组 (x0, x1, y0, y1) 以限制轴的地图显示范围。</li>
+<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html?highlight=set_xticks#cartopy.mpl.geoaxes.GeoAxes.set_xticks">set_xticks</a>：设置 x 轴的刻度。</li>
+<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html?highlight=set_xticks#cartopy.mpl.geoaxes.GeoAxes.set_xticks">set_yticks</a>：设置 y 轴的刻度。</li>
+<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html#cartopy.mpl.geoaxes.GeoAxes.gridlines">gridlines</a>：给地图添加网格线。</li>
+<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html#cartopy.mpl.geoaxes.GeoAxes.coastlines">coastlines</a>：在地图上绘制海岸线。</li>
+<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html#cartopy.mpl.geoaxes.GeoAxes.stock_img">stock_img</a>：给地图添加低分辨率的地形图背景。</li>
+<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html#cartopy.mpl.geoaxes.GeoAxes.add_feature">add_feature</a>：给地图添加特征实例。</li>
+</ul>
+<p>后文中具体的例子中将会经常用到这些方法。</p>
+<h3 id="使用不同的投影">使用不同的投影</h3>
+<pre><code class="language-Python">import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+
+# 选取多种投影
+projections = [ccrs.PlateCarree(),
+               ccrs.Robinson(),
+               ccrs.Mercator(),
+               ccrs.Orthographic()]
+
+# 画出多子图
+fig = plt.figure()
+for i, proj in enumerate(projections, 1):
+    ax = fig.add_subplot(2, 2, i, projection=proj)
+    ax.stock_img()  # 添加低分辨率的地形图
+    ax.coastlines()
+    ax.set_title(f'{type(proj)}', fontsize='small')
+
+plt.show()
+</code></pre>
+<p><img src="https://ZhaJiMan.github.io/post-images/1568444852804.png" alt="" loading="lazy"><br>
+这个例子展示了如何使用别的投影和画出多子图。其中<code>stock_img</code>方法可以给地图添加低分辨率的地形背景图，让地图显得不那么寒碜。</p>
+<p>投影本身在实例化时可以指定一些参数，例如<code>ccrs.PlateCarree(central_longitude=180)</code>可以让等距圆柱投影的全球图像的中央位于太平洋的180度经线处。</p>
+<p>画多子图还可以用<code>plt.subplots</code>函数，但是投影就只能指定一种了。</p>
+<h3 id="在地图上添加特征features">在地图上添加特征（Features）</h3>
+<p>除了画出海岸线外，我们常常需要在地图上画出更多特征，例如陆地海洋、河流湖泊等。<code>cartopy.feature</code>中便准备了许多常用的特征对象。需要注意的是，这些对象的默认比例是1cm:1100km。<br>
+<img src="https://ZhaJiMan.github.io/post-images/1568447130431.png" alt="" loading="lazy"></p>
+<pre><code class="language-Python">import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+
+fig = plt.figure()
+proj = ccrs.PlateCarree()
+ax = fig.add_subplot(111, projection=proj)
+
+# 设置经纬度范围,限定为中国
+# 注意指定crs关键字,否则范围不一定完全准确
+extent = [75, 150, 15, 60]
+ax.set_extent(extent, crs=proj)
+# 添加各种特征
+ax.add_feature(cfeature.OCEAN)
+ax.add_feature(cfeature.LAND, edgecolor='black')
+ax.add_feature(cfeature.LAKES, edgecolor='black')
+ax.add_feature(cfeature.RIVERS)
+ax.add_feature(cfeature.BORDERS)
+# 添加网格线
+ax.gridlines(linestyle='--')
+
+plt.show()
+</code></pre>
+<p><img src="https://ZhaJiMan.github.io/post-images/1568448615649.png" alt="" loading="lazy"><br>
+<code>add_feature</code>方法能够把<code>cfeature</code>里的特征对象添加到地图上。上面的例子中就依次添加了海洋、陆地、湖泊、河流，还有国界线的特征。由于渲染实际上采用的是 Matplotlib 里 <a href="https://matplotlib.org/tutorials/text/annotations.html">annotations</a> 的方法，所以添加的特征本质上就是一些线或者多边形，<code>edgecolor</code>、<code>facecolor</code>等常用关键字都可以用来指定这些特征的效果。</p>
+<p>在添加特征时，命令行可能会显示一些警告信息，这是因为 Cartopy 本身并不带有任何地图数据，在首次执行画图命令时，会自动从 <a href="http://www.naturalearthdata.com/downloads/">Natural Earth</a> 网站下载开源的地图数据，由于画图指令默认的地图分辨率都是很粗的1cm:1100km，所以下载很快，显得像是 Cartopy 内置了地图数据一样。此后再运行时便不会出现警告。下一节里就讲讲如何设置地图数据的分辨率。</p>
+<p>另外还有一个非常重要的问题，<strong>Cartopy 画出来的中国地图不能直接用</strong>！例如上面的图中就没有台湾地区，藏南处也有错误。这是因为国外提供的地图数据的国界线普遍不符合我国的地图标准（政治因素），在后面的小节中还会提到如何画出符合标准的中国地图。</p>
+<h3 id="设置地图分辨率与下载地图">设置地图分辨率与下载地图</h3>
+<p><img src="https://ZhaJiMan.github.io/post-images/1568450989397.png" alt="" loading="lazy"><br>
+Cartopy 原生支持 <a href="http://www.naturalearthdata.com/downloads/">Natural Earth</a> 的地图，分辨率有三档：1:10m、1:50m、1:110m（然而我看不懂这个比例尺，难道1指的是1微米？），默认的分辨率是1:110m，这在很多场合下会显得很粗糙。设置分辨率的方法如下：</p>
+<pre><code class="language-Python"># coastlines方法使用resolution关键字
+ax.coastlines(resolution='50m')
+# add_feature方法则对cfeature对象采用with_scale方法
+ax.add_feature(cfeature.OCEAN.with_scale('50m'))
+</code></pre>
+<p>接着是一个例子：</p>
+<pre><code class="language-Python">import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+
+fig = plt.figure()
+res = ['110m', '50m', '10m']
+extent = [75, 150, 15, 60]
+
+proj = ccrs.PlateCarree()
+for i in range(3):
+    ax = fig.add_subplot(1, 3, i+1, projection=proj)
+    ax.set_extent(extent, crs=proj)
+
+    ax.add_feature(cfeature.OCEAN.with_scale(res[i]))
+    ax.add_feature(cfeature.LAND.with_scale(res[i]), edgecolor='black')
+    ax.add_feature(cfeature.LAKES.with_scale(res[i]), edgecolor='black')
+    ax.add_feature(cfeature.RIVERS.with_scale(res[i]))
+    ax.add_feature(cfeature.BORDERS.with_scale(res[i]))
+    ax.gridlines(linestyle='--')
+
+    ax.set_title('resolution=' + res[i])
+
+plt.show()
+</code></pre>
+<p><img src="https://ZhaJiMan.github.io/post-images/1568453006251.png" alt="" loading="lazy"><br>
+可以看到不同分辨率的绘制效果有着很大的区别。但是问题又来了，当你初次使用1:10m这样的高分辨率来画图时，因为地图数据文件很大，再加上国内下载速度很慢，画图的速度会令人窒息（当然下一次画图就会快很多了）。因此，我们可以去 <a href="http://www.naturalearthdata.com/downloads/">Natural Earth</a> 网站提前把地图数据下载下来，以省去运行时的龟速下载。同时这也能方便我们在离线环境下作图。</p>
+<p>进入下载的网页，可以看到有地图有1:10m、1:50m、1:110m三种分辨率，同时又细分为三类：</p>
+<ul>
+<li>Cultural：提供国界线、道路、铁路等文化信息。</li>
+<li>Physical：提供陆地、海洋、海岸线、湖泊、冰川等地质信息。</li>
+<li>Raster：提供各种分辨率的地形起伏栅格文件。</li>
+</ul>
+<p>其中 Cultural 和 Physical 数据可以作为常用的特征来进行添加，而 Raster 数据则需要用<code>imshow</code>方法来作为图片显示。以前两者为例，当我们下载了所需分辨率的数据后，解压得到一系列前缀为&quot;ne&quot;的 shapefile 文件。在 Python 解释器中执行：</p>
+<pre><code class="language-Python">import cartopy
+print(cartopy.config['data_dir'])
+</code></pre>
+<p>得到你电脑中 Natural Earth 地图数据存放的绝对路径，然后把下载好的数据分为<code>physical</code>和<code>cultural</code>文件夹粘贴进去。于是我们作图时就可以免去在线下载数据之苦了。</p>
+<h3 id="在地图上添加数据">在地图上添加数据</h3>
+<p>在直接调用 <code>ax.plot</code>、<code>ax.contourf</code>等方法在地图上添加数据之前，需要了解 Cartopy 的一个核心概念：在实例化一个<code>GeoAxes</code>时，通过<code>projection</code>关键字指定了这个地图所处的投影坐标系，这个坐标系的投影方式和原点位置都可以被指定。但是我们手上的数据很可能并不是定义在这个坐标系下的（例如那些规整的经纬度网格数据），因此在定义好的地图上添加数据时，需要通过<code>transform</code>关键字指定我们的数据所处的坐标系。画图过程中，Cartopy 会自动进行这两个坐标系之间的换算，把我们的数据正确投影到轴的坐标系上。下面给出一个例子：</p>
+<pre><code class="language-Python">import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+
+# 定义一个在PlateCarree投影中的方框
+x = [-100.0, -100.0, 100.0, 100.0, -100.0]
+y = [-60.0, 60.0, 60.0, -60.0, -60.0]
+
+# 选取两种地图投影
+map_proj = [ccrs.PlateCarree(), ccrs.Mollweide()]
+data_proj = ccrs.PlateCarree()
+
+fig = plt.figure()
+ax1 = fig.add_subplot(211, projection=map_proj[0])
+ax1.stock_img()
+ax1.plot(x, y, marker='o', transform=data_proj)
+ax1.fill(x, y, color='coral', transform=data_proj, alpha=0.4)
+ax1.set_title('PlateCarree')
+
+ax2 = fig.add_subplot(212, projection=map_proj[1])
+ax2.stock_img()
+ax2.plot(x, y, marker='o', transform=data_proj)
+ax2.fill(x, y, color='coral', transform=data_proj, alpha=0.4)
+ax2.set_title('Mollweide')
+
+plt.show()
+</code></pre>
+<p><img src="https://ZhaJiMan.github.io/post-images/1568532176184.png" alt="" loading="lazy"><br>
+可以看到，我们给出的数据是等距圆柱投影地图上的一个方框，这样的数据画在摩尔威投影的地图上肯定不会是方框。如果不给出<code>transform</code>关键字，那么 Cartopy 会默认数据是定义在<code>PlateCarree()</code>下的。为了严谨起见，建议在使用任何添加数据的画图语句（<code>plot</code>、<code>contourf</code>、<code>pcolormesh</code>等等）时都给出<code>transform</code>。</p>
+<h3 id="为地图添加经纬度刻度">为地图添加经纬度刻度</h3>
+<p><strong>Cartopy 仅支持为直角坐标系统增添刻度</strong>，例如等距圆柱投影和麦卡托投影，而兰勃特投影之类的则无法支持。这可以说是 Cartopy 的一大缺陷。下面以等距圆柱投影为例：</p>
+<pre><code class="language-Python">import numpy as np
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+# 导入Cartopy专门提供的经纬度的Formatter
+from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection=ccrs.PlateCarree(central_longitude=180))
+
+ax.set_global()
+ax.stock_img()
+
+# 设置大刻度和小刻度
+ax.set_xticks(np.arange(0, 360+60, 60), crs=ccrs.PlateCarree())
+ax.xaxis.set_minor_locator(plt.MultipleLocator(30))
+ax.set_yticks(np.arange(-90, 90+30, 30), crs=ccrs.PlateCarree())
+ax.yaxis.set_minor_locator(plt.MultipleLocator(15))
+
+# 利用Formatter格式化刻度标签
+ax.xaxis.set_major_formatter(LongitudeFormatter())
+ax.yaxis.set_major_formatter(LatitudeFormatter())
+
+plt.show()
+</code></pre>
+<p><img src="https://ZhaJiMan.github.io/post-images/1568516019449.png" alt="" loading="lazy"><br>
+Cartopy 中需要用<code>GeoAxes</code>类的<code>set_xticks</code>和<code>set_yticks</code>方法来设置坐标刻度。这两个方法还可以通过布尔数组指定小刻度，但这样有些麻烦，因此这里用<code>set_minor_locator</code>的方法来设置小刻度。另外经过测试，<code>set_major_locator</code>方法是没办法使用的。</p>
+<p><code>set_xticks</code>中的<code>crs</code>关键字指的是我们给出的 ticks 是在什么坐标系统下定义的，这样好换算至轴所在的坐标系统，原理同上一节所述。如果不指定，就很容易出现把 ticks 画到地图外的情况。</p>
+<p>接着利用 Cartopy 专门提供的 Formatter 来格式化刻度的标签，使之能有东经西经、南纬北纬的字母标识。</p>
+<p>Cartopy 存在的另一个问题是，对于全球地图来说，明明代码中指定了经度的大刻度从0度到360度，那么画出的地图的 x 轴上应该左右两端各有一个0度，但结果是最右端缺失了一个刻度。与之相比，NCL就能完整标识出刻度来：<br>
+<img src="https://ZhaJiMan.github.io/post-images/1568516844662.png" alt="" loading="lazy"><br>
+这是因为 360 mod 360 = 0，导致最后一个刻度又回到最左边的零刻度处了。解决方法见<a href="https://stackoverflow.com/questions/56412206/cant-show-0-tick-in-right-when-central-longitude-180">这个链接</a>，这里就不多赘述了。</p>
+<p>Cartopy 还有一个很坑的地方在于，<code>set_extent</code>与指定 ticks 有冲突，如果你先用前者设置好了，接下来的<code>set_xticks</code>超出了 extent 的范围的话，就会以 ticks 的范围为准。因此使用时要注意 ticks 的范围，或把<code>set_extent</code>操作放在最后实施。</p>
+<p>除了利用<code>set_xticks</code>和<code>set_yticks</code>方法，还可以在画网格线的同时画出刻度。例子如下：</p>
+<pre><code class="language-Python">import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import cartopy.crs as ccrs
+# 从Gridliner类中导入经纬度专用的Formatter
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+
+ax = plt.axes(projection=ccrs.Mercator())
+ax.coastlines()
+
+gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                  linewidth=1, color='gray', linestyle='--')
+gl.xlabels_top = False
+gl.ylabels_left = False
+# 自定义给出x轴Locator的位置
+gl.xlocator = mticker.FixedLocator([-180, -45, 0, 45, 180])
+gl.xformatter = LONGITUDE_FORMATTER
+gl.yformatter = LATITUDE_FORMATTER
+# 把一些ax.text会用到的关键字组成词典,用来调节标签
+gl.xlabel_style = {'size': 15, 'color': 'gray'}
+gl.xlabel_style = {'color': 'red', 'weight': 'bold'}
+
+plt.show()
+</code></pre>
+<p><img src="https://ZhaJiMan.github.io/post-images/1568533700565.png" alt="" loading="lazy"><br>
+这种办法的优点是<code>Gridliner</code>类本身的可调选项更为丰富，我就经常用这个办法来画。具体参数见 <a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/gridliner.html">Cartopy map gridlines and tick labels</a>。另外一个有意思的地方是，<code>Gridliner</code>类提供的 Formatter 除了用在地图上，还能用在普通 xy 图的<code>Axes</code>上（例如经向平均或纬向平均），而<code>cartopy.mpl.ticker</code>中的 Formatter 则只能用在<code>GeoAxes</code>对象上。</p>
+<p>最后提一句，虽然 Cartopy 目前不支持为非直角坐标系添加刻度，但利用 Matplotlib 强大的自定义性，是可以手动添上刻度的。<a href="https://cloud.tencent.com/developer/article/1484887">这个链接</a>就给出了为兰勃特投影添加刻度的方法。</p>
+<h3 id="绘制正确的中国地图">绘制正确的中国地图</h3>
+<p>我在网上找到了两个绘制中国地图的教程：</p>
+<ul>
+<li><a href="https://cloud.tencent.com/developer/article/1484356">捍卫祖国领土从每一张地图开始</a></li>
+<li><a href="https://gnss.help/2018/04/24/cartopy-gallery/index.html">Cartopy 绘图示例库</a><br>
+第一个链接提供了正确的中国省界的 shapefile，用 Cartopy 的 shapereader 读取后即可绘制。第二个链接则利用的是 GMT 中文社区上提供的省界的经纬度数据。两个链接都给出了完整的代码，经测试都可以正常作图。第一个链接的效果图如下：<br>
+<img src="https://ZhaJiMan.github.io/post-images/1568535324067.png" alt="" loading="lazy"><br>
+问题在于两种方法的画图速度都非常慢，可能是因为画的多边形太多，分辨率太高？相比之下，NCL 画中国省界就快得多。</li>
+</ul>
+<h3 id="从入门到放弃">从入门到放弃</h3>
+<p>最后来个 NCL 与 Cartopy 在画图方面的简单对比吧。<br>
+<strong>NCL：</strong></p>
+<ul>
+<li>画地图参数多，效果好，对缺测值适应较好。</li>
+<li>绘图语法虽然麻烦，但能写出很规整的代码。</li>
+<li>画图速度较快。</li>
+<li>官方文档足够详尽。</li>
+<li>默认的画图模板不好看，改善效果很麻烦。</li>
+</ul>
+<p><strong>Cartopy：</strong></p>
+<ul>
+<li>画地图的可调参数比 NCL 少，需要通过 Matplotlib 魔改上去。</li>
+<li>绘图语法与 Matplotlib 完全一致，一堆参数乱序挤在括号里很难看。</li>
+<li>画图速度很慢，例如下图的风箭头，竟然要画一分多钟。</li>
+<li>只能给直角坐标系的投影加刻度。</li>
+<li>官方文档不够详细，中文教程也少，有问题只能靠 Stack Overflow。</li>
+<li>可以发挥 Matplotlib 的强大功能（前提是你精通 Matplotlib 的话）。</li>
+<li>当前版本不算高，会有一些 bug。</li>
+</ul>
+<figure data-type="image" tabindex="1"><img src="https://ZhaJiMan.github.io/post-images/1568537593653.png" alt="" loading="lazy"></figure>
+<p>总之，我现在觉得，除非是对 Python 丰富的扩展库有需求的话，单就画点科研用的地图，从 NCL 转 Python 并没有太大的优势，还会让你陷入同 bug 作战的漩涡中。反正我现在是对 NCL 肃然起敬了：从上世纪90年代发展至今，版本号已经达到6.6.2，多年下来已经累计了足够多的实用功能。虽然这一优秀的工具停止了开发，但我们依旧可以继续使用它（就像都9102年了还有人在玩帝国时代2一样）。</p>
+<p>反正技多不压身，学点 Cartopy，就当是熟悉一下 Python 的功能吧。</p>
+<h3 id="参考链接">参考链接</h3>
+<ol>
+<li>一个非常好的入门教程：<a href="https://rabernat.github.io/research_computing_2018/maps-with-cartopy.html">Maps with Cartopy</a>，同时这个网站里还有其它科学计算库的教程。</li>
+<li>简单的安装：<a href="https://gnss.help/2018/01/30/cartopy-install-introduce/index.html">Cartopy 简介与安装</a></li>
+<li>快速入门并画 contour：<a href="http://smellysheep.com/2018/09/cartopy-%e5%85%a5%e9%97%a8/">Cartopy 入门</a></li>
+<li>根据 shp 画中国地图：<a href="https://cloud.tencent.com/developer/article/1484356">捍卫祖国领土从每一张地图开始</a></li>
+<li>画中国地图以及其它例子：<a href="https://gnss.help/2018/04/24/cartopy-gallery/index.html">Cartopy 绘图示例库</a></li>
+<li>Unidata 给出的地图例子：<a href="http://unidata.github.io/python-gallery/examples/index.html">Unidata Python Gallery<br>
+</a></li>
+<li>最好的参考当然是官方文档：<a href="https://scitools.org.uk/cartopy/docs/latest/index.html">Introduction — cartopy 0.17.0 documentation</a></li>
+</ol>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://ZhaJiMan.github.io/post/pilot_p500/">
+              <h3 class="post-title">
+                下一篇：我认为可以概括百乐的一支笔
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+        
+          <div id="gitalk-container"></div>
+        
+
+        
+      
+
+      <div class="site-footer">
+  <div class="slogan">炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://ZhaJiMan.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'd3e98a2219dd32298c8a',
+        clientSecret: '04b6ce88dc40c267a998b38f9b245b259b91dc2b',
+        repo: 'ZhaJiMan.github.io',
+        owner: 'ZhaJiMan',
+        admin: ['ZhaJiMan'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>
