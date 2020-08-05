@@ -1,0 +1,305 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>scipy.stats 模块的简单用法 | 炸 鸡 人</title>
+<meta name="description" content="炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1596592483149">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://ZhaJiMan.github.io">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1596592483149" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://ZhaJiMan.github.io">
+        <h1 class="site-title">炸 鸡 人</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+            <div class="feature-container" style="background-image: url('https://ZhaJiMan.github.io/post-images/scipy_stats.png')">
+            </div>
+          
+          <h2 class="post-title">scipy.stats 模块的简单用法</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2020-08-05</span>
+            
+          </div>
+          <div class="post-content">
+            <h2 id="简介">简介</h2>
+<p><code>scipy.stats</code>提供了简单的统计学函数，例如随机变量的生成、计算相关系数，还有进行统计检验等。下面简单介绍如何使用该模块生成连续型随机变量，以及一些常用的方法。</p>
+<h2 id="连续型随机变量">连续型随机变量</h2>
+<p>连续型随机变量通过<code>rv_continuous</code>类表示，常用的分布有</p>
+<ul>
+<li><code>stats.norm</code>：正态分布。</li>
+<li><code>stats.chi2</code>：卡方分布。</li>
+<li><code>stats.t</code>：t 分布。</li>
+<li><code>stats.f</code>: F 分布。</li>
+</ul>
+<p>例如要生成一个标准正态分布的随机变量，操作为</p>
+<pre><code class="language-Python">from scipy import stats
+rv = stats.norm(loc=0, scale=1)
+</code></pre>
+<p>其中参数<code>loc</code>表示分布的位置，<code>scale</code>表示对分布的放缩。这两个参数对于不同的分布有不同的意义，需要查询文档来确定。例如对于正态分布来说，<code>loc</code>就是 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">μ</span></span></span></span>，<code>scale</code>就是 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">σ</span></span></span></span>。默认值为<code>loc=0</code>，<code>scale=1</code>，所以其实<code>stats.norm()</code>就能生成一个标准正态分布。</p>
+<p>除了考虑平移和放缩的这两个参数外，某些分布还需要提供更多的参数，例如 t 分布需要给出自由度<code>df</code>。</p>
+<p>如果直接调用分布的方法的话，每次都需要向方法提供<code>loc</code>和<code>scale</code>等形状参数，这未免有些太麻烦。但如果将分布实例化的话，就只需要在初始化时给出即可。这一做法被称为“冻结”（freezing）一个分布，例如</p>
+<pre><code class="language-Python"># 直接调用时需要给出参数.
+print(stats.norm.mean(loc=0, scale=1))
+
+# 实例化后再调用,不再需要参数.
+rv = stats.norm(loc=0, scale=1)
+print(rv.mean())
+</code></pre>
+<h2 id="常用方法">常用方法</h2>
+<pre><code class="language-Python"># 生成n个服从该分布的样本值.
+rv.rvs(size=n)
+
+# 得到该分布的一些统计值.'mv'指示平均值和方差.
+rv.stats(moments='mv')
+
+# 得到数组x所对应的PDF函数.
+rv.pdf(x)
+
+# 得到数组x所对应的CDF函数.
+rv.cdf(x)
+
+# 得到数组x所对应的Survival Function,即1-CDF.
+rv.sf(x)
+
+# 得到数组q所对应的Percent Point Function,即CDF的逆函数.
+rv.ppf(x)
+
+# 得到数组q所对应的SF逆函数.
+rv.isf(q)
+</code></pre>
+<p>下面用图示说明一下<code>ppf</code>和<code>isf</code>函数的用法。</p>
+<figure data-type="image" tabindex="1"><img src="https://ZhaJiMan.github.io/post-images/1596591544577.png" alt="" loading="lazy"></figure>
+<p>如上图所示，对于标准正态分布，设显著性水平 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>α</mi><mo>=</mo><mn>0.05</mn></mrow><annotation encoding="application/x-tex">\alpha=0.05</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span><span class="mord">.</span><span class="mord">0</span><span class="mord">5</span></span></span></span>，<code>ppf(1-alpha)</code>能够给出左半部分累计概率为 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>95</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">95\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.80556em;vertical-align:-0.05556em;"></span><span class="mord">9</span><span class="mord">5</span><span class="mord">%</span></span></span></span> 时对应的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 的值，即下分位点。</p>
+<figure data-type="image" tabindex="2"><img src="https://ZhaJiMan.github.io/post-images/1596591777379.png" alt="" loading="lazy"></figure>
+<p>如上图所示，<code>isf(1-alpha)</code>能够给出右半部分累计概率为 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>95</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">95\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.80556em;vertical-align:-0.05556em;"></span><span class="mord">9</span><span class="mord">5</span><span class="mord">%</span></span></span></span> 时对应的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 的值，即上分位点。等价的表述为<code>ppf(alpha)</code>。</p>
+<figure data-type="image" tabindex="3"><img src="https://ZhaJiMan.github.io/post-images/1596591908640.png" alt="" loading="lazy"></figure>
+<p>如上图所示，通过<code>isf(1-alpha/2)</code>和<code>ppf(1-alpha/2)</code>（或者<code>isf(alpha/2)</code>和<code>ppf(alpha/2)</code>），可以找出中间部分累计概率为 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>95</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">95\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.80556em;vertical-align:-0.05556em;"></span><span class="mord">9</span><span class="mord">5</span><span class="mord">%</span></span></span></span> 时对应的两个 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 的值：<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>±</mo><mn>1.96</mn></mrow><annotation encoding="application/x-tex">\pm1.96</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">±</span><span class="mord">1</span><span class="mord">.</span><span class="mord">9</span><span class="mord">6</span></span></span></span>。</p>
+<p>画图的代码如下</p>
+<pre><code class="language-Python">import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+
+def draw_plot(alpha, side):
+    '''画出正态分布的分位数图.
+    
+    side=left表示下alpha分位点,右半部分概率为1-alpha.
+    side=right表示上alpha分位点,左半部分概率为1-alpha.
+    side=both表示上下alpha/2分位点,中间部分概率为1-alpha.
+    '''
+
+    rv = stats.norm(loc=0, scale=1)
+    x = np.linspace(-5, 5, 1000)
+    y = rv.pdf(x)
+
+    # 计算分位点
+    if side == 'left':
+        xp = rv.isf(1-alpha)
+        flag = (x &gt;= xp)
+        yp = rv.pdf(xp)
+    elif side == 'right':
+        xp = rv.ppf(1-alpha)
+        flag = (x &lt;= xp)
+        yp = rv.pdf(xp)
+    if side == 'both':
+        xpl = rv.isf(1-alpha/2)
+        xpr = rv.ppf(1-alpha/2)
+        flag = (x &gt;= xpl) &amp; (x &lt;= xpr)
+        yp = rv.pdf(xpl)
+
+    xf = x[flag]
+    yf = y[flag]
+
+    fig = plt.figure(dpi=150)
+    ax = fig.add_subplot(111)
+
+    # 画出PDF曲线和1-alpha概率的区间
+    ax.plot(x, y)
+    ax.fill_between(xf, yf, alpha=0.5)
+
+    # 标出概率
+    ax.text(0, y.max()/2.5, f'{(1-alpha)*100}%', fontsize='large', \
+            ha='center', va='center')
+    
+    # 标出分位点
+    if side == 'left':
+        ax.plot(xp, yp, 'ko', ms=3)
+        ax.text(1.05*xp, 1.05*yp, f'x={xp:.2f}', ha='right')
+    elif side == 'right':
+        ax.plot(xp, yp, 'ko', ms=3)
+        ax.text(1.05*xp, 1.05*yp, f'x={xp:.2f}', ha='left')
+    elif side == 'both':
+        ax.plot([xpl, xpr], [yp, yp], 'ko', ms=3)
+        ax.text(1.05*xpl, 1.05*yp, f'x={xpl:.2f}', ha='right')
+        ax.text(1.05*xpr, 1.05*yp, f'x={xpr:.2f}', ha='left')
+
+    ax.set_ylim(0, None)
+    ax.set_xlabel('x', fontsize='large')
+    ax.set_ylabel('PDF', fontsize='large')
+    ax.set_title('Normal Distribution', fontsize='large')
+
+    fig.savefig('normal_' + side)
+    plt.close(fig)
+
+alpha = 0.05
+draw_plot(alpha, side='left')
+draw_plot(alpha, side='right')
+draw_plot(alpha, side='both')
+</code></pre>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://ZhaJiMan.github.io/post/sample_variance/">
+              <h3 class="post-title">
+                下一篇：为什么样本方差的分母是 n-1？
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+        
+          <div id="gitalk-container"></div>
+        
+
+        
+      
+
+      <div class="site-footer">
+  <div class="slogan">炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://ZhaJiMan.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'd3e98a2219dd32298c8a',
+        clientSecret: '04b6ce88dc40c267a998b38f9b245b259b91dc2b',
+        repo: 'ZhaJiMan.github.io',
+        owner: 'ZhaJiMan',
+        admin: ['ZhaJiMan'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>
