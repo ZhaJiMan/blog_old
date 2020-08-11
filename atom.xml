@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://ZhaJiMan.github.io</id>
     <title>炸 鸡 人</title>
-    <updated>2020-08-05T01:55:09.234Z</updated>
+    <updated>2020-08-11T09:16:29.274Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://ZhaJiMan.github.io"/>
     <link rel="self" href="https://ZhaJiMan.github.io/atom.xml"/>
@@ -1595,15 +1595,119 @@ plt.show()
 <ul>
 <li>画地图的可调参数比 NCL 少，需要通过 Matplotlib 魔改上去。</li>
 <li>绘图语法与 Matplotlib 完全一致，一堆参数乱序挤在括号里很难看。</li>
-<li>画图速度很慢，例如下图的风箭头，竟然要画一分多钟。</li>
-<li>只能给直角坐标系的投影加刻度。</li>
+<li>画图速度偏慢。</li>
+<li>只能给直角坐标系的投影加刻度。最新的 0.18 版本有所改进，但 Bug 还是很多。</li>
 <li>官方文档不够详细，中文教程也少，有问题只能靠 Stack Overflow。</li>
 <li>可以发挥 Matplotlib 的强大功能（前提是你精通 Matplotlib 的话）。</li>
-<li>当前版本不算高，会有一些 bug。</li>
 </ul>
-<figure data-type="image" tabindex="1"><img src="https://ZhaJiMan.github.io/post-images/1568537593653.png" alt="" loading="lazy"></figure>
 <p>总之，我现在觉得，除非是对 Python 丰富的扩展库有需求的话，单就画点科研用的地图，从 NCL 转 Python 并没有太大的优势，还会让你陷入同 bug 作战的漩涡中。反正我现在是对 NCL 肃然起敬了：从上世纪90年代发展至今，版本号已经达到6.6.2，多年下来已经累计了足够多的实用功能。虽然这一优秀的工具停止了开发，但我们依旧可以继续使用它（就像都9102年了还有人在玩帝国时代2一样）。</p>
 <p>反正技多不压身，学点 Cartopy，就当是熟悉一下 Python 的功能吧。</p>
+<h3 id="绘制-era5-数据的一个例子">绘制 ERA5 数据的一个例子</h3>
+<p>有评论要这个例子，代码就贴在下面。中间用到的 shapefile 在气象家园上下载的。<br>
+<img src="https://ZhaJiMan.github.io/post-images/1597137339751.png" alt="" loading="lazy"></p>
+<pre><code class="language-Python">#-----------------------------------------------------------
+# 2019/09/10
+# 画出ERA5的500hPa高度的相对湿度和风场
+#-----------------------------------------------------------
+import netCDF4
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from cartopy.io.shapereader import Reader
+from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+
+def set_map(ax, extent): 
+    '''给一个GeoAxes画上海岸线和中国省界'''
+
+    proj = ccrs.PlateCarree()
+    shp_path = 'D:\\maps\\shps\\bou2_4p.shp'
+
+    # 添加海岸线
+    ax.add_feature(cfeature.COASTLINE.with_scale('10m'), lw=0.3)
+    # 添加省界
+    reader = Reader(shp_path)
+    provinces = cfeature.ShapelyFeature(reader.geometries(), proj, \
+                                        edgecolor='k', facecolor='none')
+    ax.add_feature(provinces, linewidth=0.3)
+
+    # 设置坐标轴
+    xticks = np.arange(-180, 181, 10)
+    yticks = np.arange(-90, 91, 10)
+    ax.set_xticks(xticks, crs=proj)
+    ax.set_yticks(yticks, crs=proj)
+    ax.xaxis.set_major_formatter(LongitudeFormatter())
+    ax.yaxis.set_major_formatter(LatitudeFormatter())
+    ax.tick_params('both', labelsize='x-small')
+
+    # 最后限定范围,以免和ticks冲突
+    ax.set_extent(extent, crs=proj)
+
+filename = 't_uv_rh_gp_ERA5.nc'
+f = netCDF4.Dataset(filename, 'r')
+f.set_auto_mask(False)  # 不要masked array
+
+lon = f['longitude'][:]
+lat = f['latitude'][:]
+lev = f['level'][:]     # 共有两层,[500, 800]hPa
+time = f['time']
+time_str = netCDF4.num2date(time[0], time.units).strftime('%Y%m%d')
+
+# 设置绘制区域
+lonmin, lonmax = 75, 150
+latmin, latmax = 15, 60
+extent = [lonmin, lonmax, latmin, latmax]
+
+# 根据绘制区域选取下标
+ilon0, ilon1 = np.where((lon &gt;= lonmin) &amp; (lon &lt;= lonmax))[0][[0, -1]]
+ilat0, ilat1 = np.where((lat &gt;= latmin) &amp; (lat &lt;= latmax))[0][[0, -1]]
+# 重新设置经纬度
+lon = lon[ilon0:ilon1+1]
+lat = lat[ilat0:ilat1+1]
+
+# 选取初始时间和500hPa
+# 按绘制区域范围截取数据,以免画图太慢
+u = f['u'][0,0,ilat0:ilat1+1,ilon0:ilon1+1]
+v = f['v'][0,0,ilat0:ilat1+1,ilon0:ilon1+1]
+q = f['q'][0,0,ilat0:ilat1+1,ilon0:ilon1+1]
+rh = f['r'][0,0,ilat0:ilat1+1,ilon0:ilon1+1]
+
+f.close()
+
+proj = ccrs.PlateCarree()
+fig = plt.figure(dpi=150)
+ax = fig.add_subplot(111, projection=proj)
+set_map(ax, extent)
+
+# 画出填色图
+im = ax.contourf(lon, lat, rh, levels=np.linspace(0, 100, 11), transform=proj, 
+                 cmap='rainbow', extend='both', alpha=0.8)
+cbar = fig.colorbar(im, ax=ax, extend=&quot;both&quot;, shrink=0.7, pad=0.09, \
+                    orientation=&quot;horizontal&quot;)
+cbar.set_label(&quot;%&quot;)
+
+# 绘制风场箭头和用于标识速度的单箭头,但是巨慢
+# units指定箭头大小的基本单位
+# scale_units指定箭头长度的基本单位
+# scale指定data units/arrow units,scale越小,箭头长度越长
+Q = ax.quiver(lon, lat, u, v, regrid_shape=20, transform=proj,
+              units='width', width=0.0018, scale=12, scale_units='xy')
+qk = ax.quiverkey(Q, 145, 17, 40, r'$40 m/s$', labelpos='N', 
+                  coordinates='data', fontproperties={'size':7})
+qk.set_zorder(3)
+
+# 添加圈住单箭头的方框
+rect = mpl.patches.Rectangle((140, 15), 10, 7, edgecolor='k', facecolor='w')
+rect.set_zorder(2)
+ax.add_patch(rect)
+
+ax.set_title('Relative Humidity and Wind at 500hPa')
+
+# plt.show()
+fig.savefig('rh_wnd_500_' + time_str)
+plt.close(fig)
+</code></pre>
 <h3 id="参考链接">参考链接</h3>
 <ol>
 <li>一个非常好的入门教程：<a href="https://rabernat.github.io/research_computing_2018/maps-with-cartopy.html">Maps with Cartopy</a>，同时这个网站里还有其它科学计算库的教程。</li>
