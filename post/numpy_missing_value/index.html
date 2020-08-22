@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1597137342330">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1598099492319">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
 
@@ -36,7 +36,7 @@
   <div class="site-header">
     <div class="left">
       <a href="https://ZhaJiMan.github.io">
-        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1597137342330" alt="" width="32px" height="32px">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1598099492319" alt="" width="32px" height="32px">
       </a>
       <a href="https://ZhaJiMan.github.io">
         <h1 class="site-title">炸 鸡 人</h1>
@@ -175,10 +175,11 @@ x[0] = ma.masked
 </code></pre>
 <p>需要注意，模块中还存在一个<code>ma.nomask</code>量，但它本质上是布尔类型的<code>False</code>，所以不要用它来做上面的操作，否则会导致元素的数值直接变为 0。</p>
 <p>除此之外，还有一种方法是直接给 masked 的元素赋值，这样会让元素不再缺测，但如果 masked array 的<code>hard_mask</code>参数为<code>True</code>的话（默认为<code>False</code>），会拒绝这样的直接改写。个人觉得最好不要这样直接改写，所以对此有需求的读者可以参考 NumPy 文档的说明。</p>
-<p>最后讲两个使用过程中很坑的地方，不感兴趣的读者可以跳过。</p>
+<p>最后讲三个使用过程中很坑的地方，不感兴趣的读者可以跳过。</p>
 <ul>
 <li>例如对于一个 masked array，<code>x</code>，我们可能会认为<code>x&gt;1</code>返回的布尔数组表示的是<code>x</code>中那些大于 1 的<strong>有效值</strong>。但实际上，<code>x&gt;1</code>也是个 masked array，它会包含处于 masked 状态的<code>True</code>。于是<code>x[x&gt;1]</code>中会含有原始数值大于 1 的缺测值，想只保留有效值的话需要再用<code>x[x&gt;1].compressed()</code>之类的方法。</li>
 <li>如果想避开缺测值来修改一个 masked array 的数值，如上面所述，直接赋值是会作用到缺测值上的。所以这样的操作需要通过<code>ma.where</code>函数来进行。</li>
+<li>想要把一系列 masked array 连接起来时（例如<code>concatenate</code>、<code>hstack</code>、<code>vstack</code>等），如果使用<code>np</code>版本的函数的话，会把 masked array 转化为 ndarray，并且暴露出 mask 掉的值。因此应该使用<code>ma</code>版本对应的函数。</li>
 </ul>
 <h2 id="两种方法的对比">两种方法的对比</h2>
 <p>首先指出 masked array 相比 NaN 方法的优势</p>
@@ -186,11 +187,13 @@ x[0] = ma.masked
 <li>把数据、缺测值位置，和填充值打包到了一起，当数组特别多时，更加易于管理。</li>
 <li>用于处理 masked array 的函数远多于处理 NaN 的函数。</li>
 <li>可以不只是用于缺测值，我们可以先遮盖（mask）掉一些暂时不需要考虑的值，只要不经过复杂的运算，那么这些被遮盖的值会一直被保留，方便之后重新提取出来。</li>
+<li>在进行<code>nanmean</code>等计算时，若数组内全为 NaN，会跳出 RuntimeWarning 的警告。但是 masked array 的<code>mean</code>方法就能正确处理全部 mask 掉的数组。</li>
 </ul>
 <p>但是 masked array 的缺点也是显而易见的</p>
 <ul>
 <li>多附带了一个布尔数组，增加了内存的消耗。</li>
 <li>计算上会更慢。</li>
+<li>scipy 中一些模块只支持含 NaN 的数组。</li>
 </ul>
 <p>下面就举一个测试计算速度的例子</p>
 <pre><code class="language-Python">import numpy as np
