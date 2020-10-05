@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://ZhaJiMan.github.io</id>
     <title>炸 鸡 人</title>
-    <updated>2020-08-22T12:31:36.278Z</updated>
+    <updated>2020-10-05T15:02:33.676Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://ZhaJiMan.github.io"/>
     <link rel="self" href="https://ZhaJiMan.github.io/atom.xml"/>
@@ -10,6 +10,191 @@
     <logo>https://ZhaJiMan.github.io/images/avatar.png</logo>
     <icon>https://ZhaJiMan.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, 炸 鸡 人</rights>
+    <entry>
+        <title type="html"><![CDATA[在 Python 用进程池搞并行]]></title>
+        <id>https://ZhaJiMan.github.io/post/multiprocessing/</id>
+        <link href="https://ZhaJiMan.github.io/post/multiprocessing/">
+        </link>
+        <updated>2020-10-05T08:55:44.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="前言">前言</h2>
+<p>最近遇到这样一个问题：读取大量文件，对其中的数据进行处理，最后把所有处理过的数据聚合到一起。由于文件太多，使得执行时间太过离谱，因此考虑使用并行来加速。Python 中实现并行可以通过多线程或多进程的方法。多线程因为全局解释锁（GIL）的限制，实际上只能加速文件 IO 等操作，而对实际计算无甚帮助（参考<a href="http://www.composingprograms.com/pages/48-parallel-computing.html">这个</a>），我验证后结果果然如此。于是学习了一下多进程的方法，将经验记录于此。内容多抄自网络博客，如有错误敬请指出。</p>
+<p>关于线程、进程，以及并行的知识可以参考这个<a href="https://www.zhihu.com/question/307100151/answer/894486042">知乎回答</a>。</p>
+<h2 id="为什么选择进程池">为什么选择进程池</h2>
+<p>在网上一搜，会发现有三种整并行的方案：</p>
+<ul>
+<li>手动划分任务给多个子进程。</li>
+<li>弄个生产者消费者模型，把要处理的文件输入到队列中，给多个 worker 吃掉。</li>
+<li>开个进程池，自动把任务分配给池子里的子进程。</li>
+</ul>
+<p>对于我们这样的任务，生产者消费者模型过于复杂，那么为了图方便，自然是选择能自动分配任务的进程池来搞并行。并且进程池方便聚合子进程计算的结果，而前两种方案都需要通过维护一个队列来收集结果（<code>Process</code> 类不返回结果导致的）。</p>
+<h2 id="设计任务">设计任务</h2>
+<p>为了演示，设计这样一个简单的任务：calc_one_number 能够计算出一个数的平方，但速度很慢。现在我们有一个装有很多数的列表，希望能把 calc_one_number 应用到每个数上，并把结果收集起来。可以估计出，总耗时会很长，因此需要用并行来缩短执行时间。</p>
+<h2 id="演示代码">演示代码</h2>
+<pre><code class="language-Python">#----------------------------------------------------------------------
+# 2020/10/05
+# 学习如何使用进程池做并行.
+#
+# 参考链接:
+# [1] 一行 Python 实现并行化 -- 日常多线程操作的新思路
+# https://segmentfault.com/a/1190000000414339
+# [2] Parallel Processing in Python – A Practical Guide with Examples
+# https://www.machinelearningplus.com/python/parallel-processing-python/
+# [3] multiprocessing.Pool: When to use apply, apply_async or map?
+# https://stackoverflow.com/questions/8533318/multiprocessing-pool-when-to-use-apply-apply-async-or-map#
+# [4] multiprocessing — Process-based parallelism
+# https://docs.python.org/3/library/multiprocessing.html#multiprocessing.pool.AsyncResult
+# [5] python multiprocessing on windows, if __name__ == “__main__”
+# https://stackoverflow.com/questions/20222534/python-multiprocessing-on-windows-if-name-main
+#----------------------------------------------------------------------
+import time
+from multiprocessing import Pool
+
+def clock(func):
+    '''用于计算函数耗时的装饰器'''
+
+    def clocked(*args, **kw):
+        start_time = time.time()
+        result = func(*args, **kw)
+        end_time = time.time()
+        time_cost = end_time - start_time
+        print(f'func &lt;{func.__name__}&gt; time_cost: {time_cost} s')
+        
+        return result
+
+    return clocked
+
+def calc_one_number(x):
+    '''计算一个数的平方.'''
+
+    n = int(5e6)
+    for _ in range(n):  # 通过循环拖时间.
+        y = x**2
+    return y
+
+@clock
+def do_serial():
+    '''串行执行任务.'''
+
+    # 任务:对列表xs中的每一个元素执行calc_one_number函数.
+    xs = list(range(8))
+    results = [calc_one_number(x) for x in xs]
+    print(results)
+
+@clock
+def do_map():
+    '''用map来并行执行任务.
+    
+    map类似于Python原生的map函数,区别在于内部计算是并行的,并且会直接返回结果列表.
+    
+    map的特点为:
+    (1)会阻塞主进程直到结果汇总为列表.
+    (2)会保留输入序列的顺序(synchronous).
+    '''
+
+    xs = list(range(8))
+    p = Pool(processes=4)
+    results = p.map(calc_one_number, xs)
+    p.close()
+    p.join()
+    print(results)
+
+@clock
+def do_map_async():
+    '''用map_async来并行执行任务.
+    
+    与Pool.map功能一致,区别在于:
+    (1)提交任务后不会阻塞,而是在后台运行.使用results.get()时会把所有结果汇总到一个列表中.
+    (2)无法保证输出序列与输入序列间的元素顺序一致(asynchronous).
+    '''
+
+    xs = list(range(8))
+    p = Pool(processes=4)
+    results = p.map_async(calc_one_number, xs)
+    p.close()
+    p.join()
+    print(results.get())
+
+@clock
+def do_apply():
+    '''用apply来并行执行任务.
+    
+    一个apply函数只能作用于一个元素,同时向进程池提交一个任务.因此需要通过循环来提交所有任务.
+    
+    调用后会返回函数的返回值.与map类似,调用时会阻塞主进程直至返回结果.
+    因此下一次提交任务必须等待上一个任务计算完毕,所以apply其实无法实现并行运算,不建议使用.
+    '''
+
+    xs = list(range(8))
+    p = Pool(processes=4)
+    results = [p.apply(calc_one_number, args=(x,)) for x in xs]
+    p.close()
+    p.join()
+    print(results)
+
+@clock
+def do_apply_async():
+    '''用apply_async来并行执行任务.
+    
+    与Pool.apply功能一致,区别在于调用后不会阻塞主进程,而是会在后台运算.
+    因此可以接着提交下一个任务,从而实现并行运算.
+    
+    需要通过get方法从返回的结果中获取任务函数的返回值.
+
+    虽然方法名字里含async,但下面的程序中,因为列表含有每个任务的顺序,所以返回结果保留了输入序列的顺序.
+    '''
+
+    xs = list(range(8))
+    p = Pool(processes=4)
+    results = [p.apply_async(calc_one_number, args=(x,)) for x in xs]
+    p.close()
+    p.join()
+    print([res.get() for res in results])
+
+result_list = []
+def log_result(result):
+    '''apply_async的回调函数.用一个全局的list记录一次任务的结果.'''
+
+    result_list.append(result)
+
+@clock
+def do_apply_async_with_callback():
+    '''用apply_async来并行执行任务.输出结果用回调函数收集.
+    
+    每当一个进程完成任务后,主线程会调用回调函数对返回的结果进行处理.
+    由于进程间是异步的,所以最后得到的结果不一定能保留输入序列的顺序.
+
+    一个奇怪的地方是,使用with语句管理Pool时子进程没有执行完毕.
+    '''
+
+    xs = list(range(8))
+    p = Pool(processes=4)
+    for x in xs:
+        p.apply_async(calc_one_number, args=(x,), callback=log_result)
+    p.close()
+    p.join()
+    print(result_list)
+
+# Windows下使用多进程时必须使用__main__ guard.具体见参考链接[5].
+if __name__ == '__main__':
+    do_serial()
+    # do_map()
+    # do_map_async()
+    # do_apply()
+    # do_apply_async()
+    # do_apply_async_with_callback()
+
+#----------------------------------------------------------------------
+# 额外话题:什么时候能省掉p.join()?
+# 
+# 对于map和apply来说,调用时所有子进程自然会阻塞主进程,所以可以省略.
+# 对于map_async和apply_async来说,调用get()时也会阻塞主进程,所以可以省略.
+# 使用回调函数收集结果时,注意要用join阻塞直到结果都运算完毕后,再打印结果.
+#----------------------------------------------------------------------
+</code></pre>
+<p>我电脑的 CPU 是六核，上面的并行开了四个子进程。最后结果是：串行的耗时为 8 秒多，并行耗时为 2 秒多，有四倍多的加速，结果来说是很令人满意了。</p>
+<p>好了，以上就是小编分享的在 Python 用进程池搞并行是什么，在 Python 用进程池搞并行怎么用。希望小编精心整理的这篇内容能够解决你的困惑。</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[scipy.stats 模块的简单用法]]></title>
         <id>https://ZhaJiMan.github.io/post/scipy_stats/</id>
@@ -1329,399 +1514,6 @@ df
 \end{aligned}
 </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:6.40932em;vertical-align:-2.9546600000000005em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:3.4546599999999996em;"><span style="top:-5.45466em;"><span class="pstrut" style="height:3.3714399999999998em;"></span><span class="mord"><span class="mord mathdefault">d</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span></span></span><span style="top:-3.43422em;"><span class="pstrut" style="height:3.3714399999999998em;"></span><span class="mord"></span></span><span style="top:-1.4027799999999995em;"><span class="pstrut" style="height:3.3714399999999998em;"></span><span class="mord"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714399999999998em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">d</span><span class="mord mathdefault">s</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">d</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.9546600000000005em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:3.4546599999999996em;"><span style="top:-5.45466em;"><span class="pstrut" style="height:3.3714399999999998em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord"><span class="mord mathdefault">n</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714399999999998em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord" style="margin-right:0.05556em;">∂</span><span class="mord mathdefault">x</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord" style="margin-right:0.05556em;">∂</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord mathdefault">d</span><span class="mord mathdefault">s</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mord mathdefault">n</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">y</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714399999999998em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord" style="margin-right:0.05556em;">∂</span><span class="mord mathdefault" style="margin-right:0.03588em;">y</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord" style="margin-right:0.05556em;">∂</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.8804400000000001em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord mathdefault">d</span><span class="mord mathdefault">s</span></span></span><span style="top:-3.43422em;"><span class="pstrut" style="height:3.3714399999999998em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mopen">(</span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathdefault">n</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;">^</span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord">∇</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mclose">)</span><span class="mord mathdefault">d</span><span class="mord mathdefault">s</span></span></span><span style="top:-1.4027799999999995em;"><span class="pstrut" style="height:3.3714399999999998em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathdefault">n</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;">^</span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord">∇</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.9546600000000005em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
 <p>方向导数就定义为函数在给定方向上的变化率，即 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>d</mi><mi>f</mi><mi mathvariant="normal">/</mi><mi>d</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">df/ds</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault">d</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mord">/</span><span class="mord mathdefault">d</span><span class="mord mathdefault">s</span></span></span></span>。于是方向导数就是梯度在给定方向 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mover accent="true"><mi>n</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathdefault">n</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;">^</span></span></span></span></span></span></span></span></span> 上的投影。同时也可以看到，当 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mover accent="true"><mi>n</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathdefault">n</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;">^</span></span></span></span></span></span></span></span></span> 的方向与梯度方向相同时，函数有最大的变化率，说明梯度给出了函数变化率最大的方向和数值。</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Cartopy：从入门到放弃]]></title>
-        <id>https://ZhaJiMan.github.io/post/cartopy_introduction/</id>
-        <link href="https://ZhaJiMan.github.io/post/cartopy_introduction/">
-        </link>
-        <updated>2019-09-14T02:29:42.000Z</updated>
-        <content type="html"><![CDATA[<h3 id="cartopy-简介">Cartopy 简介</h3>
-<p><img src="https://ZhaJiMan.github.io/post-images/1568426542667.png" alt="" loading="lazy"><br>
-科研上常用的把数据绘制在地图上的编程工具有 MATLAB、IDL、GrADS、GMT、NCL 等。我之前一直使用的是脚本语言 NCL，易用性不错，画地图的效果也很好。然而2019年初，NCAR 宣布 NCL 将停止更新，并会在日后转为 Python 的绘图包。于是我开始考虑转投 Python，同时觉得在 Python 环境下如果还是用 PyNGL 那一套语法的话，未免有些换汤不换药。因此我选择用 Python 环境下专有的 Cartopy 包来画地图。<br>
-<img src="https://ZhaJiMan.github.io/post-images/1568426854042.png" alt="" loading="lazy"><br>
-此前 Python 最常用的地图包是 Basemap，然而它将于2020年被弃用，官方推荐使用 Cartopy 包作为替代。Cartopy 是英国气象局开发的地图绘图包，实现了 Basemap 的大部分功能，还可以通过 Matplotlib 的 API 实现丰富的自定义效果。</p>
-<p>本文将会从一个 NCL 转 Python 的入门者的角度，介绍如何安装 Cartopy，如何绘制地图，并实现一些常用的效果。</p>
-<p><em>本文写作时 Cartopy 的版本为 0.17.0。</em></p>
-<h3 id="安装-cartopy-和相关的库">安装 Cartopy 和相关的库</h3>
-<p>通过 Conda 来安装 Cartopy 是最为简单方便的。首先我们需要下载最新的 Python 3 的 Conda 环境（Anaconda 或 Miniconda 皆可），设置国内镜像源，建立好虚拟环境，然后参照 Cartopy 官网的<a href="https://scitools.org.uk/cartopy/docs/latest/installing.html#installing">安装说明</a>，执行操作：</p>
-<pre><code>conda install -c conda-forge cartopy
-</code></pre>
-<p>接着便会开始安装 Cartopy，以及 Numpy、Matplotlib 等一系列相关包。Cartopy 的安装就是这么简单。接着还可以考虑去安装 netCDF4、h5py、pyhdf 等支持特定格式读写的包。</p>
-<h3 id="画地图的基本流程">画地图的基本流程</h3>
-<p>以一个简单的例子来说明：</p>
-<pre><code class="language-Python"># 导入所需的库
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-# 创建画布以及轴
-fig = plt.figure()
-ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-# 调用轴的方法画海岸线
-ax.coastlines()
-plt.show()
-</code></pre>
-<p><img src="https://ZhaJiMan.github.io/post-images/1568440658399.png" alt="" loading="lazy"><br>
-Cartopy 是利用 Matplotlib 来画图的，因此首先要导入<code>pyplot</code>模块。在 Cartopy 中，每种投影都是一个类，被存放在<code>cartopy.crs</code>中，crs 即坐标参考系统（Coordinate Reference Systems）之意。所以接着要导入这个模块。这里选取最常用的等距圆柱投影<code>ccrs.PlateCarree</code>作为地图投影。</p>
-<p>我们知道，Matplotlib 画图是通过调用<code>Axes</code>类的方法来完成的。Cartopy 创造了一个<code>Axes</code>的子类，<code>GeoAxes</code>，它继承了前者的基本功能，还添加了一系列绘制地图元素的方法。生成一个<code>GeoAxes</code>实例的办法是，在创建 axes（或 subplot）时，通过参数<code>projection</code>指定一个<code>ccrs</code>中的投影实例。这里便利用这一方法生成了一个等距圆柱投影下的轴。</p>
-<p>最后调用轴的方法<code>coastlines</code>画出海岸线，默认以本初子午线为中心，比例尺为1cm:1100km。</p>
-<p>因此用 Cartopy 画地图的基本流程并不复杂：</p>
-<ul>
-<li>创建画布。</li>
-<li>通过<code>projection</code>实例化<code>GeoAxes</code>。</li>
-<li>调用<code>Axes</code>或<code>GeoAxes</code>的方法在轴上画图。</li>
-</ul>
-<h3 id="geoaxes-的一些有用的方法">GeoAxes 的一些有用的方法</h3>
-<p><code>GeoAxes</code>有不少有用的方法，这里列举如下：</p>
-<ul>
-<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html#cartopy.mpl.geoaxes.GeoAxes.set_global">set_global</a>：让当前轴的显示范围扩展至投影的最大范围。例如，对<code>PlateCarree</code>投影的轴使用后，地图会变成全球的。</li>
-<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html#cartopy.mpl.geoaxes.GeoAxes.set_extent">set_extent</a>：给出元组 (x0, x1, y0, y1) 以限制轴的地图显示范围。</li>
-<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html?highlight=set_xticks#cartopy.mpl.geoaxes.GeoAxes.set_xticks">set_xticks</a>：设置 x 轴的刻度。</li>
-<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html?highlight=set_xticks#cartopy.mpl.geoaxes.GeoAxes.set_xticks">set_yticks</a>：设置 y 轴的刻度。</li>
-<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html#cartopy.mpl.geoaxes.GeoAxes.gridlines">gridlines</a>：给地图添加网格线。</li>
-<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html#cartopy.mpl.geoaxes.GeoAxes.coastlines">coastlines</a>：在地图上绘制海岸线。</li>
-<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html#cartopy.mpl.geoaxes.GeoAxes.stock_img">stock_img</a>：给地图添加低分辨率的地形图背景。</li>
-<li><a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html#cartopy.mpl.geoaxes.GeoAxes.add_feature">add_feature</a>：给地图添加特征实例。</li>
-</ul>
-<p>后文中具体的例子中将会经常用到这些方法。</p>
-<h3 id="使用不同的投影">使用不同的投影</h3>
-<pre><code class="language-Python">import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-
-# 选取多种投影
-projections = [ccrs.PlateCarree(),
-               ccrs.Robinson(),
-               ccrs.Mercator(),
-               ccrs.Orthographic()]
-
-# 画出多子图
-fig = plt.figure()
-for i, proj in enumerate(projections, 1):
-    ax = fig.add_subplot(2, 2, i, projection=proj)
-    ax.stock_img()  # 添加低分辨率的地形图
-    ax.coastlines()
-    ax.set_title(f'{type(proj)}', fontsize='small')
-
-plt.show()
-</code></pre>
-<p><img src="https://ZhaJiMan.github.io/post-images/1568444852804.png" alt="" loading="lazy"><br>
-这个例子展示了如何使用别的投影和画出多子图。其中<code>stock_img</code>方法可以给地图添加低分辨率的地形背景图，让地图显得不那么寒碜。</p>
-<p>投影本身在实例化时可以指定一些参数，例如<code>ccrs.PlateCarree(central_longitude=180)</code>可以让等距圆柱投影的全球图像的中央位于太平洋的180度经线处。</p>
-<p>画多子图还可以用<code>plt.subplots</code>函数，但是投影就只能指定一种了。</p>
-<h3 id="在地图上添加特征features">在地图上添加特征（Features）</h3>
-<p>除了画出海岸线外，我们常常需要在地图上画出更多特征，例如陆地海洋、河流湖泊等。<code>cartopy.feature</code>中便准备了许多常用的特征对象。需要注意的是，这些对象的默认比例是1cm:1100km。<br>
-<img src="https://ZhaJiMan.github.io/post-images/1568447130431.png" alt="" loading="lazy"></p>
-<pre><code class="language-Python">import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-
-fig = plt.figure()
-proj = ccrs.PlateCarree()
-ax = fig.add_subplot(111, projection=proj)
-
-# 设置经纬度范围,限定为中国
-# 注意指定crs关键字,否则范围不一定完全准确
-extent = [75, 150, 15, 60]
-ax.set_extent(extent, crs=proj)
-# 添加各种特征
-ax.add_feature(cfeature.OCEAN)
-ax.add_feature(cfeature.LAND, edgecolor='black')
-ax.add_feature(cfeature.LAKES, edgecolor='black')
-ax.add_feature(cfeature.RIVERS)
-ax.add_feature(cfeature.BORDERS)
-# 添加网格线
-ax.gridlines(linestyle='--')
-
-plt.show()
-</code></pre>
-<p><img src="https://ZhaJiMan.github.io/post-images/1568448615649.png" alt="" loading="lazy"><br>
-<code>add_feature</code>方法能够把<code>cfeature</code>里的特征对象添加到地图上。上面的例子中就依次添加了海洋、陆地、湖泊、河流，还有国界线的特征。由于渲染实际上采用的是 Matplotlib 里 <a href="https://matplotlib.org/tutorials/text/annotations.html">annotations</a> 的方法，所以添加的特征本质上就是一些线或者多边形，<code>edgecolor</code>、<code>facecolor</code>等常用关键字都可以用来指定这些特征的效果。</p>
-<p>在添加特征时，命令行可能会显示一些警告信息，这是因为 Cartopy 本身并不带有任何地图数据，在首次执行画图命令时，会自动从 <a href="http://www.naturalearthdata.com/downloads/">Natural Earth</a> 网站下载开源的地图数据，由于画图指令默认的地图分辨率都是很粗的1cm:1100km，所以下载很快，显得像是 Cartopy 内置了地图数据一样。此后再运行时便不会出现警告。下一节里就讲讲如何设置地图数据的分辨率。</p>
-<p>另外还有一个非常重要的问题，<strong>Cartopy 画出来的中国地图不能直接用</strong>！例如上面的图中就没有台湾地区，藏南处也有错误。这是因为国外提供的地图数据的国界线普遍不符合我国的地图标准（政治因素），在后面的小节中还会提到如何画出符合标准的中国地图。</p>
-<h3 id="设置地图分辨率与下载地图">设置地图分辨率与下载地图</h3>
-<p><img src="https://ZhaJiMan.github.io/post-images/1568450989397.png" alt="" loading="lazy"><br>
-Cartopy 原生支持 <a href="http://www.naturalearthdata.com/downloads/">Natural Earth</a> 的地图，分辨率有三档：1:10m、1:50m、1:110m（然而我看不懂这个比例尺，难道1指的是1微米？），默认的分辨率是1:110m，这在很多场合下会显得很粗糙。设置分辨率的方法如下：</p>
-<pre><code class="language-Python"># coastlines方法使用resolution关键字
-ax.coastlines(resolution='50m')
-# add_feature方法则对cfeature对象采用with_scale方法
-ax.add_feature(cfeature.OCEAN.with_scale('50m'))
-</code></pre>
-<p>接着是一个例子：</p>
-<pre><code class="language-Python">import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-
-fig = plt.figure()
-res = ['110m', '50m', '10m']
-extent = [75, 150, 15, 60]
-
-proj = ccrs.PlateCarree()
-for i in range(3):
-    ax = fig.add_subplot(1, 3, i+1, projection=proj)
-    ax.set_extent(extent, crs=proj)
-
-    ax.add_feature(cfeature.OCEAN.with_scale(res[i]))
-    ax.add_feature(cfeature.LAND.with_scale(res[i]), edgecolor='black')
-    ax.add_feature(cfeature.LAKES.with_scale(res[i]), edgecolor='black')
-    ax.add_feature(cfeature.RIVERS.with_scale(res[i]))
-    ax.add_feature(cfeature.BORDERS.with_scale(res[i]))
-    ax.gridlines(linestyle='--')
-
-    ax.set_title('resolution=' + res[i])
-
-plt.show()
-</code></pre>
-<p><img src="https://ZhaJiMan.github.io/post-images/1568453006251.png" alt="" loading="lazy"><br>
-可以看到不同分辨率的绘制效果有着很大的区别。但是问题又来了，当你初次使用1:10m这样的高分辨率来画图时，因为地图数据文件很大，再加上国内下载速度很慢，画图的速度会令人窒息（当然下一次画图就会快很多了）。因此，我们可以去 <a href="http://www.naturalearthdata.com/downloads/">Natural Earth</a> 网站提前把地图数据下载下来，以省去运行时的龟速下载。同时这也能方便我们在离线环境下作图。</p>
-<p>进入下载的网页，可以看到有地图有1:10m、1:50m、1:110m三种分辨率，同时又细分为三类：</p>
-<ul>
-<li>Cultural：提供国界线、道路、铁路等文化信息。</li>
-<li>Physical：提供陆地、海洋、海岸线、湖泊、冰川等地质信息。</li>
-<li>Raster：提供各种分辨率的地形起伏栅格文件。</li>
-</ul>
-<p>其中 Cultural 和 Physical 数据可以作为常用的特征来进行添加，而 Raster 数据则需要用<code>imshow</code>方法来作为图片显示。以前两者为例，当我们下载了所需分辨率的数据后，解压得到一系列前缀为&quot;ne&quot;的 shapefile 文件。在 Python 解释器中执行：</p>
-<pre><code class="language-Python">import cartopy
-print(cartopy.config['data_dir'])
-</code></pre>
-<p>得到你电脑中 Natural Earth 地图数据存放的绝对路径，然后把下载好的数据分为<code>physical</code>和<code>cultural</code>文件夹粘贴进去。于是我们作图时就可以免去在线下载数据之苦了。</p>
-<h3 id="在地图上添加数据">在地图上添加数据</h3>
-<p>在直接调用 <code>ax.plot</code>、<code>ax.contourf</code>等方法在地图上添加数据之前，需要了解 Cartopy 的一个核心概念：在实例化一个<code>GeoAxes</code>时，通过<code>projection</code>关键字指定了这个地图所处的投影坐标系，这个坐标系的投影方式和原点位置都可以被指定。但是我们手上的数据很可能并不是定义在这个坐标系下的（例如那些规整的经纬度网格数据），因此在定义好的地图上添加数据时，需要通过<code>transform</code>关键字指定我们的数据所处的坐标系。画图过程中，Cartopy 会自动进行这两个坐标系之间的换算，把我们的数据正确投影到轴的坐标系上。下面给出一个例子：</p>
-<pre><code class="language-Python">import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-
-# 定义一个在PlateCarree投影中的方框
-x = [-100.0, -100.0, 100.0, 100.0, -100.0]
-y = [-60.0, 60.0, 60.0, -60.0, -60.0]
-
-# 选取两种地图投影
-map_proj = [ccrs.PlateCarree(), ccrs.Mollweide()]
-data_proj = ccrs.PlateCarree()
-
-fig = plt.figure()
-ax1 = fig.add_subplot(211, projection=map_proj[0])
-ax1.stock_img()
-ax1.plot(x, y, marker='o', transform=data_proj)
-ax1.fill(x, y, color='coral', transform=data_proj, alpha=0.4)
-ax1.set_title('PlateCarree')
-
-ax2 = fig.add_subplot(212, projection=map_proj[1])
-ax2.stock_img()
-ax2.plot(x, y, marker='o', transform=data_proj)
-ax2.fill(x, y, color='coral', transform=data_proj, alpha=0.4)
-ax2.set_title('Mollweide')
-
-plt.show()
-</code></pre>
-<p><img src="https://ZhaJiMan.github.io/post-images/1568532176184.png" alt="" loading="lazy"><br>
-可以看到，我们给出的数据是等距圆柱投影地图上的一个方框，这样的数据画在摩尔威投影的地图上肯定不会是方框。如果不给出<code>transform</code>关键字，那么 Cartopy 会默认数据是定义在<code>PlateCarree()</code>下的。为了严谨起见，建议在使用任何添加数据的画图语句（<code>plot</code>、<code>contourf</code>、<code>pcolormesh</code>等等）时都给出<code>transform</code>。</p>
-<h3 id="为地图添加经纬度刻度">为地图添加经纬度刻度</h3>
-<p><strong>Cartopy 仅支持为直角坐标系统增添刻度</strong>，例如等距圆柱投影和麦卡托投影，而兰勃特投影之类的则无法支持。这可以说是 Cartopy 的一大缺陷。下面以等距圆柱投影为例：</p>
-<pre><code class="language-Python">import numpy as np
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-# 导入Cartopy专门提供的经纬度的Formatter
-from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
-
-fig = plt.figure()
-ax = fig.add_subplot(111, projection=ccrs.PlateCarree(central_longitude=180))
-
-ax.set_global()
-ax.stock_img()
-
-# 设置大刻度和小刻度
-ax.set_xticks(np.arange(0, 360+60, 60), crs=ccrs.PlateCarree())
-ax.xaxis.set_minor_locator(plt.MultipleLocator(30))
-ax.set_yticks(np.arange(-90, 90+30, 30), crs=ccrs.PlateCarree())
-ax.yaxis.set_minor_locator(plt.MultipleLocator(15))
-
-# 利用Formatter格式化刻度标签
-ax.xaxis.set_major_formatter(LongitudeFormatter())
-ax.yaxis.set_major_formatter(LatitudeFormatter())
-
-plt.show()
-</code></pre>
-<p><img src="https://ZhaJiMan.github.io/post-images/1568516019449.png" alt="" loading="lazy"><br>
-Cartopy 中需要用<code>GeoAxes</code>类的<code>set_xticks</code>和<code>set_yticks</code>方法来设置坐标刻度。这两个方法还可以通过布尔数组指定小刻度，但这样有些麻烦，因此这里用<code>set_minor_locator</code>的方法来设置小刻度。另外经过测试，<code>set_major_locator</code>方法是没办法使用的。</p>
-<p><code>set_xticks</code>中的<code>crs</code>关键字指的是我们给出的 ticks 是在什么坐标系统下定义的，这样好换算至轴所在的坐标系统，原理同上一节所述。如果不指定，就很容易出现把 ticks 画到地图外的情况。</p>
-<p>接着利用 Cartopy 专门提供的 Formatter 来格式化刻度的标签，使之能有东经西经、南纬北纬的字母标识。</p>
-<p>Cartopy 存在的另一个问题是，对于全球地图来说，明明代码中指定了经度的大刻度从0度到360度，那么画出的地图的 x 轴上应该左右两端各有一个0度，但结果是最右端缺失了一个刻度。与之相比，NCL就能完整标识出刻度来：<br>
-<img src="https://ZhaJiMan.github.io/post-images/1568516844662.png" alt="" loading="lazy"><br>
-这是因为 360 mod 360 = 0，导致最后一个刻度又回到最左边的零刻度处了。解决方法见<a href="https://stackoverflow.com/questions/56412206/cant-show-0-tick-in-right-when-central-longitude-180">这个链接</a>，这里就不多赘述了。</p>
-<p>Cartopy 还有一个很坑的地方在于，<code>set_extent</code>与指定 ticks 有冲突，如果你先用前者设置好了，接下来的<code>set_xticks</code>超出了 extent 的范围的话，就会以 ticks 的范围为准。因此使用时要注意 ticks 的范围，或把<code>set_extent</code>操作放在最后实施。</p>
-<p>除了利用<code>set_xticks</code>和<code>set_yticks</code>方法，还可以在画网格线的同时画出刻度。例子如下：</p>
-<pre><code class="language-Python">import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
-import cartopy.crs as ccrs
-# 从Gridliner类中导入经纬度专用的Formatter
-from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
-
-ax = plt.axes(projection=ccrs.Mercator())
-ax.coastlines()
-
-gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
-                  linewidth=1, color='gray', linestyle='--')
-gl.xlabels_top = False
-gl.ylabels_left = False
-# 自定义给出x轴Locator的位置
-gl.xlocator = mticker.FixedLocator([-180, -45, 0, 45, 180])
-gl.xformatter = LONGITUDE_FORMATTER
-gl.yformatter = LATITUDE_FORMATTER
-# 把一些ax.text会用到的关键字组成词典,用来调节标签
-gl.xlabel_style = {'size': 15, 'color': 'gray'}
-gl.xlabel_style = {'color': 'red', 'weight': 'bold'}
-
-plt.show()
-</code></pre>
-<p><img src="https://ZhaJiMan.github.io/post-images/1568533700565.png" alt="" loading="lazy"><br>
-这种办法的优点是<code>Gridliner</code>类本身的可调选项更为丰富，我就经常用这个办法来画。具体参数见 <a href="https://scitools.org.uk/cartopy/docs/latest/matplotlib/gridliner.html">Cartopy map gridlines and tick labels</a>。另外一个有意思的地方是，<code>Gridliner</code>类提供的 Formatter 除了用在地图上，还能用在普通 xy 图的<code>Axes</code>上（例如经向平均或纬向平均），而<code>cartopy.mpl.ticker</code>中的 Formatter 则只能用在<code>GeoAxes</code>对象上。</p>
-<p>最后提一句，虽然 Cartopy 目前不支持为非直角坐标系添加刻度，但利用 Matplotlib 强大的自定义性，是可以手动添上刻度的。<a href="https://cloud.tencent.com/developer/article/1484887">这个链接</a>就给出了为兰勃特投影添加刻度的方法。</p>
-<h3 id="绘制正确的中国地图">绘制正确的中国地图</h3>
-<p>我在网上找到了两个绘制中国地图的教程：</p>
-<ul>
-<li><a href="https://cloud.tencent.com/developer/article/1484356">捍卫祖国领土从每一张地图开始</a></li>
-<li><a href="https://gnss.help/2018/04/24/cartopy-gallery/index.html">Cartopy 绘图示例库</a><br>
-第一个链接提供了正确的中国省界的 shapefile，用 Cartopy 的 shapereader 读取后即可绘制。第二个链接则利用的是 GMT 中文社区上提供的省界的经纬度数据。两个链接都给出了完整的代码，经测试都可以正常作图。第一个链接的效果图如下：<br>
-<img src="https://ZhaJiMan.github.io/post-images/1568535324067.png" alt="" loading="lazy"><br>
-问题在于两种方法的画图速度都非常慢，可能是因为画的多边形太多，分辨率太高？相比之下，NCL 画中国省界就快得多。</li>
-</ul>
-<h3 id="从入门到放弃">从入门到放弃</h3>
-<p>最后来个 NCL 与 Cartopy 在画图方面的简单对比吧。<br>
-<strong>NCL：</strong></p>
-<ul>
-<li>画地图参数多，效果好，对缺测值适应较好。</li>
-<li>绘图语法虽然麻烦，但能写出很规整的代码。</li>
-<li>画图速度较快。</li>
-<li>官方文档足够详尽。</li>
-<li>默认的画图模板不好看，改善效果很麻烦。</li>
-</ul>
-<p><strong>Cartopy：</strong></p>
-<ul>
-<li>画地图的可调参数比 NCL 少，需要通过 Matplotlib 魔改上去。</li>
-<li>绘图语法与 Matplotlib 完全一致，一堆参数乱序挤在括号里很难看。</li>
-<li>画图速度偏慢。</li>
-<li>只能给直角坐标系的投影加刻度。最新的 0.18 版本有所改进，但 Bug 还是很多。</li>
-<li>官方文档不够详细，中文教程也少，有问题只能靠 Stack Overflow。</li>
-<li>可以发挥 Matplotlib 的强大功能（前提是你精通 Matplotlib 的话）。</li>
-</ul>
-<p>总之，我现在觉得，除非是对 Python 丰富的扩展库有需求的话，单就画点科研用的地图，从 NCL 转 Python 并没有太大的优势，还会让你陷入同 bug 作战的漩涡中。反正我现在是对 NCL 肃然起敬了：从上世纪90年代发展至今，版本号已经达到6.6.2，多年下来已经累计了足够多的实用功能。虽然这一优秀的工具停止了开发，但我们依旧可以继续使用它（就像都9102年了还有人在玩帝国时代2一样）。</p>
-<p>反正技多不压身，学点 Cartopy，就当是熟悉一下 Python 的功能吧。</p>
-<h3 id="绘制-era5-数据的一个例子">绘制 ERA5 数据的一个例子</h3>
-<p>有评论要这个例子，代码就贴在下面。中间用到的 shapefile 在气象家园上下载的。<br>
-<img src="https://ZhaJiMan.github.io/post-images/1597137339751.png" alt="" loading="lazy"></p>
-<pre><code class="language-Python">#-----------------------------------------------------------
-# 2019/09/10
-# 画出ERA5的500hPa高度的相对湿度和风场
-#-----------------------------------------------------------
-import netCDF4
-import numpy as np
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-from cartopy.io.shapereader import Reader
-from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
-
-def set_map(ax, extent): 
-    '''给一个GeoAxes画上海岸线和中国省界'''
-
-    proj = ccrs.PlateCarree()
-    shp_path = 'D:\\maps\\shps\\bou2_4p.shp'
-
-    # 添加海岸线
-    ax.add_feature(cfeature.COASTLINE.with_scale('10m'), lw=0.3)
-    # 添加省界
-    reader = Reader(shp_path)
-    provinces = cfeature.ShapelyFeature(reader.geometries(), proj, \
-                                        edgecolor='k', facecolor='none')
-    ax.add_feature(provinces, linewidth=0.3)
-
-    # 设置坐标轴
-    xticks = np.arange(-180, 181, 10)
-    yticks = np.arange(-90, 91, 10)
-    ax.set_xticks(xticks, crs=proj)
-    ax.set_yticks(yticks, crs=proj)
-    ax.xaxis.set_major_formatter(LongitudeFormatter())
-    ax.yaxis.set_major_formatter(LatitudeFormatter())
-    ax.tick_params('both', labelsize='x-small')
-
-    # 最后限定范围,以免和ticks冲突
-    ax.set_extent(extent, crs=proj)
-
-filename = 't_uv_rh_gp_ERA5.nc'
-f = netCDF4.Dataset(filename, 'r')
-f.set_auto_mask(False)  # 不要masked array
-
-lon = f['longitude'][:]
-lat = f['latitude'][:]
-lev = f['level'][:]     # 共有两层,[500, 800]hPa
-time = f['time']
-time_str = netCDF4.num2date(time[0], time.units).strftime('%Y%m%d')
-
-# 设置绘制区域
-lonmin, lonmax = 75, 150
-latmin, latmax = 15, 60
-extent = [lonmin, lonmax, latmin, latmax]
-
-# 根据绘制区域选取下标
-ilon0, ilon1 = np.where((lon &gt;= lonmin) &amp; (lon &lt;= lonmax))[0][[0, -1]]
-ilat0, ilat1 = np.where((lat &gt;= latmin) &amp; (lat &lt;= latmax))[0][[0, -1]]
-# 重新设置经纬度
-lon = lon[ilon0:ilon1+1]
-lat = lat[ilat0:ilat1+1]
-
-# 选取初始时间和500hPa
-# 按绘制区域范围截取数据,以免画图太慢
-u = f['u'][0,0,ilat0:ilat1+1,ilon0:ilon1+1]
-v = f['v'][0,0,ilat0:ilat1+1,ilon0:ilon1+1]
-q = f['q'][0,0,ilat0:ilat1+1,ilon0:ilon1+1]
-rh = f['r'][0,0,ilat0:ilat1+1,ilon0:ilon1+1]
-
-f.close()
-
-proj = ccrs.PlateCarree()
-fig = plt.figure(dpi=150)
-ax = fig.add_subplot(111, projection=proj)
-set_map(ax, extent)
-
-# 画出填色图
-im = ax.contourf(lon, lat, rh, levels=np.linspace(0, 100, 11), transform=proj, 
-                 cmap='rainbow', extend='both', alpha=0.8)
-cbar = fig.colorbar(im, ax=ax, extend=&quot;both&quot;, shrink=0.7, pad=0.09, \
-                    orientation=&quot;horizontal&quot;)
-cbar.set_label(&quot;%&quot;)
-
-# 绘制风场箭头和用于标识速度的单箭头,但是巨慢
-# units指定箭头大小的基本单位
-# scale_units指定箭头长度的基本单位
-# scale指定data units/arrow units,scale越小,箭头长度越长
-Q = ax.quiver(lon, lat, u, v, regrid_shape=20, transform=proj,
-              units='width', width=0.0018, scale=12, scale_units='xy')
-qk = ax.quiverkey(Q, 145, 17, 40, r'$40 m/s$', labelpos='N', 
-                  coordinates='data', fontproperties={'size':7})
-qk.set_zorder(3)
-
-# 添加圈住单箭头的方框
-rect = mpl.patches.Rectangle((140, 15), 10, 7, edgecolor='k', facecolor='w')
-rect.set_zorder(2)
-ax.add_patch(rect)
-
-ax.set_title('Relative Humidity and Wind at 500hPa')
-
-# plt.show()
-fig.savefig('rh_wnd_500_' + time_str)
-plt.close(fig)
-</code></pre>
-<h3 id="参考链接">参考链接</h3>
-<ol>
-<li>一个非常好的入门教程：<a href="https://rabernat.github.io/research_computing_2018/maps-with-cartopy.html">Maps with Cartopy</a>，同时这个网站里还有其它科学计算库的教程。</li>
-<li>简单的安装：<a href="https://gnss.help/2018/01/30/cartopy-install-introduce/index.html">Cartopy 简介与安装</a></li>
-<li>快速入门并画 contour：<a href="http://smellysheep.com/2018/09/cartopy-%e5%85%a5%e9%97%a8/">Cartopy 入门</a></li>
-<li>根据 shp 画中国地图：<a href="https://cloud.tencent.com/developer/article/1484356">捍卫祖国领土从每一张地图开始</a></li>
-<li>画中国地图以及其它例子：<a href="https://gnss.help/2018/04/24/cartopy-gallery/index.html">Cartopy 绘图示例库</a></li>
-<li>Unidata 给出的地图例子：<a href="http://unidata.github.io/python-gallery/examples/index.html">Unidata Python Gallery<br>
-</a></li>
-<li>最好的参考当然是官方文档：<a href="https://scitools.org.uk/cartopy/docs/latest/index.html">Introduction — cartopy 0.17.0 documentation</a></li>
-</ol>
 ]]></content>
     </entry>
 </feed>

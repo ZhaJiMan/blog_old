@@ -1,0 +1,358 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>在 Python 用进程池搞并行 | 炸 鸡 人</title>
+<meta name="description" content="炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1601910150575">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://ZhaJiMan.github.io">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1601910150575" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://ZhaJiMan.github.io">
+        <h1 class="site-title">炸 鸡 人</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+            <div class="feature-container" style="background-image: url('https://ZhaJiMan.github.io/post-images/multiprocessing.png')">
+            </div>
+          
+          <h2 class="post-title">在 Python 用进程池搞并行</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2020-10-05</span>
+            
+          </div>
+          <div class="post-content">
+            <h2 id="前言">前言</h2>
+<p>最近遇到这样一个问题：读取大量文件，对其中的数据进行处理，最后把所有处理过的数据聚合到一起。由于文件太多，使得执行时间太过离谱，因此考虑使用并行来加速。Python 中实现并行可以通过多线程或多进程的方法。多线程因为全局解释锁（GIL）的限制，实际上只能加速文件 IO 等操作，而对实际计算无甚帮助（参考<a href="http://www.composingprograms.com/pages/48-parallel-computing.html">这个</a>），我验证后结果果然如此。于是学习了一下多进程的方法，将经验记录于此。内容多抄自网络博客，如有错误敬请指出。</p>
+<p>关于线程、进程，以及并行的知识可以参考这个<a href="https://www.zhihu.com/question/307100151/answer/894486042">知乎回答</a>。</p>
+<h2 id="为什么选择进程池">为什么选择进程池</h2>
+<p>在网上一搜，会发现有三种整并行的方案：</p>
+<ul>
+<li>手动划分任务给多个子进程。</li>
+<li>弄个生产者消费者模型，把要处理的文件输入到队列中，给多个 worker 吃掉。</li>
+<li>开个进程池，自动把任务分配给池子里的子进程。</li>
+</ul>
+<p>对于我们这样的任务，生产者消费者模型过于复杂，那么为了图方便，自然是选择能自动分配任务的进程池来搞并行。并且进程池方便聚合子进程计算的结果，而前两种方案都需要通过维护一个队列来收集结果（<code>Process</code> 类不返回结果导致的）。</p>
+<h2 id="设计任务">设计任务</h2>
+<p>为了演示，设计这样一个简单的任务：calc_one_number 能够计算出一个数的平方，但速度很慢。现在我们有一个装有很多数的列表，希望能把 calc_one_number 应用到每个数上，并把结果收集起来。可以估计出，总耗时会很长，因此需要用并行来缩短执行时间。</p>
+<h2 id="演示代码">演示代码</h2>
+<pre><code class="language-Python">#----------------------------------------------------------------------
+# 2020/10/05
+# 学习如何使用进程池做并行.
+#
+# 参考链接:
+# [1] 一行 Python 实现并行化 -- 日常多线程操作的新思路
+# https://segmentfault.com/a/1190000000414339
+# [2] Parallel Processing in Python – A Practical Guide with Examples
+# https://www.machinelearningplus.com/python/parallel-processing-python/
+# [3] multiprocessing.Pool: When to use apply, apply_async or map?
+# https://stackoverflow.com/questions/8533318/multiprocessing-pool-when-to-use-apply-apply-async-or-map#
+# [4] multiprocessing — Process-based parallelism
+# https://docs.python.org/3/library/multiprocessing.html#multiprocessing.pool.AsyncResult
+# [5] python multiprocessing on windows, if __name__ == “__main__”
+# https://stackoverflow.com/questions/20222534/python-multiprocessing-on-windows-if-name-main
+#----------------------------------------------------------------------
+import time
+from multiprocessing import Pool
+
+def clock(func):
+    '''用于计算函数耗时的装饰器'''
+
+    def clocked(*args, **kw):
+        start_time = time.time()
+        result = func(*args, **kw)
+        end_time = time.time()
+        time_cost = end_time - start_time
+        print(f'func &lt;{func.__name__}&gt; time_cost: {time_cost} s')
+        
+        return result
+
+    return clocked
+
+def calc_one_number(x):
+    '''计算一个数的平方.'''
+
+    n = int(5e6)
+    for _ in range(n):  # 通过循环拖时间.
+        y = x**2
+    return y
+
+@clock
+def do_serial():
+    '''串行执行任务.'''
+
+    # 任务:对列表xs中的每一个元素执行calc_one_number函数.
+    xs = list(range(8))
+    results = [calc_one_number(x) for x in xs]
+    print(results)
+
+@clock
+def do_map():
+    '''用map来并行执行任务.
+    
+    map类似于Python原生的map函数,区别在于内部计算是并行的,并且会直接返回结果列表.
+    
+    map的特点为:
+    (1)会阻塞主进程直到结果汇总为列表.
+    (2)会保留输入序列的顺序(synchronous).
+    '''
+
+    xs = list(range(8))
+    p = Pool(processes=4)
+    results = p.map(calc_one_number, xs)
+    p.close()
+    p.join()
+    print(results)
+
+@clock
+def do_map_async():
+    '''用map_async来并行执行任务.
+    
+    与Pool.map功能一致,区别在于:
+    (1)提交任务后不会阻塞,而是在后台运行.使用results.get()时会把所有结果汇总到一个列表中.
+    (2)无法保证输出序列与输入序列间的元素顺序一致(asynchronous).
+    '''
+
+    xs = list(range(8))
+    p = Pool(processes=4)
+    results = p.map_async(calc_one_number, xs)
+    p.close()
+    p.join()
+    print(results.get())
+
+@clock
+def do_apply():
+    '''用apply来并行执行任务.
+    
+    一个apply函数只能作用于一个元素,同时向进程池提交一个任务.因此需要通过循环来提交所有任务.
+    
+    调用后会返回函数的返回值.与map类似,调用时会阻塞主进程直至返回结果.
+    因此下一次提交任务必须等待上一个任务计算完毕,所以apply其实无法实现并行运算,不建议使用.
+    '''
+
+    xs = list(range(8))
+    p = Pool(processes=4)
+    results = [p.apply(calc_one_number, args=(x,)) for x in xs]
+    p.close()
+    p.join()
+    print(results)
+
+@clock
+def do_apply_async():
+    '''用apply_async来并行执行任务.
+    
+    与Pool.apply功能一致,区别在于调用后不会阻塞主进程,而是会在后台运算.
+    因此可以接着提交下一个任务,从而实现并行运算.
+    
+    需要通过get方法从返回的结果中获取任务函数的返回值.
+
+    虽然方法名字里含async,但下面的程序中,因为列表含有每个任务的顺序,所以返回结果保留了输入序列的顺序.
+    '''
+
+    xs = list(range(8))
+    p = Pool(processes=4)
+    results = [p.apply_async(calc_one_number, args=(x,)) for x in xs]
+    p.close()
+    p.join()
+    print([res.get() for res in results])
+
+result_list = []
+def log_result(result):
+    '''apply_async的回调函数.用一个全局的list记录一次任务的结果.'''
+
+    result_list.append(result)
+
+@clock
+def do_apply_async_with_callback():
+    '''用apply_async来并行执行任务.输出结果用回调函数收集.
+    
+    每当一个进程完成任务后,主线程会调用回调函数对返回的结果进行处理.
+    由于进程间是异步的,所以最后得到的结果不一定能保留输入序列的顺序.
+
+    一个奇怪的地方是,使用with语句管理Pool时子进程没有执行完毕.
+    '''
+
+    xs = list(range(8))
+    p = Pool(processes=4)
+    for x in xs:
+        p.apply_async(calc_one_number, args=(x,), callback=log_result)
+    p.close()
+    p.join()
+    print(result_list)
+
+# Windows下使用多进程时必须使用__main__ guard.具体见参考链接[5].
+if __name__ == '__main__':
+    do_serial()
+    # do_map()
+    # do_map_async()
+    # do_apply()
+    # do_apply_async()
+    # do_apply_async_with_callback()
+
+#----------------------------------------------------------------------
+# 额外话题:什么时候能省掉p.join()?
+# 
+# 对于map和apply来说,调用时所有子进程自然会阻塞主进程,所以可以省略.
+# 对于map_async和apply_async来说,调用get()时也会阻塞主进程,所以可以省略.
+# 使用回调函数收集结果时,注意要用join阻塞直到结果都运算完毕后,再打印结果.
+#----------------------------------------------------------------------
+</code></pre>
+<p>我电脑的 CPU 是六核，上面的并行开了四个子进程。最后结果是：串行的耗时为 8 秒多，并行耗时为 2 秒多，有四倍多的加速，结果来说是很令人满意了。</p>
+<p>好了，以上就是小编分享的在 Python 用进程池搞并行是什么，在 Python 用进程池搞并行怎么用。希望小编精心整理的这篇内容能够解决你的困惑。</p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://ZhaJiMan.github.io/post/scipy_stats/">
+              <h3 class="post-title">
+                下一篇：scipy.stats 模块的简单用法
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+        
+          <div id="gitalk-container"></div>
+        
+
+        
+      
+
+      <div class="site-footer">
+  <div class="slogan">炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://ZhaJiMan.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'd3e98a2219dd32298c8a',
+        clientSecret: '04b6ce88dc40c267a998b38f9b245b259b91dc2b',
+        repo: 'ZhaJiMan.github.io',
+        owner: 'ZhaJiMan',
+        admin: ['ZhaJiMan'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>
