@@ -1,0 +1,312 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>Matplotlib 经验（1）：colormap 的设置 | 炸 鸡 人</title>
+<meta name="description" content="炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1606922246788">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://ZhaJiMan.github.io">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1606922246788" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://ZhaJiMan.github.io">
+        <h1 class="site-title">炸 鸡 人</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+            <div class="feature-container" style="background-image: url('https://ZhaJiMan.github.io/post-images/matplotlib_1_colormap.png')">
+            </div>
+          
+          <h2 class="post-title">Matplotlib 经验（1）：colormap 的设置</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2020-12-02</span>
+            
+          </div>
+          <div class="post-content">
+            <h2 id="前言">前言</h2>
+<p>所谓 colormap（颜色表），其实就是将一系列颜色按给定的顺序排列在一起。其用处是，我们可以通过某种映射关系，将一系列数值映射到一张 colormap 上去，使不同大小的数值对应不同的颜色。这样一来，在绘制 contour 或 pcolor 图像时，便能直观地用颜色来反映数值的分布。</p>
+<p>在 Matplotlib 中，数值到颜色的映射关系可以用下面这张图来表示</p>
+<figure data-type="image" tabindex="1"><img src="https://ZhaJiMan.github.io/post-images/1606876735880.png" alt="" loading="lazy"></figure>
+<p>首先，数组的数值通过 <code>Normalize</code> 类归一化到浮点型的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0.0</mn><mo separator="true">,</mo><mn>1.0</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0.0, 1.0]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mord">.</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mord">.</span><span class="mord">0</span><span class="mclose">]</span></span></span></span> 范围内（或整型的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0</mn><mo separator="true">,</mo><mi>N</mi><mo>−</mo><mn>1</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0, N-1]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">]</span></span></span></span> 范围内)，然后以这些归一化的数据作为参数调用 <code>Colormap</code> 类的实例，即可得到这些数值对应的颜色（RGBA 值）。整个过程中具体的映射关系由 <code>Normalize</code> 类决定。</p>
+<p>本文将会依次介绍 colormap 的行为、如何进行 normalization，以及实际画图的例子。</p>
+<h2 id="1-colormap-的行为">1. colormap 的行为</h2>
+<p>很容易想到，一系列颜色可以用 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>N</mi><mo>×</mo><mn>4</mn></mrow><annotation encoding="application/x-tex">N \times 4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">4</span></span></span></span> 大小的 RGBA 数组表示。但是 matplotlib 中的 colormap 并非简单的数组，而是专门用一个 <code>Colormap</code> 类实现的，有着更加方便的重采样功能。内置的所有 colormap 存储在 <code>matplotlib.cm</code> 模块下，它们的名字在官网的 <a href="https://matplotlib.org/3.3.3/tutorials/colors/colormaps.html#sphx-glr-tutorials-colors-colormaps-py">Choosing Colormaps in Matplotlib</a> 页面中可以找到。</p>
+<p><code>Colormap</code> 有两个子类：<code>ListedColormap</code> 和 <code>LinearSegmentedColormap</code>，它们被存储在 <code>matplotlib.colors</code> 模块下。下面来分别介绍它们。</p>
+<h3 id="11-listedcolormap">1.1 ListedColormap</h3>
+<p>顾名思义，将所有颜色列举到一个列表中，便能生成这一类的 colormap。一个简单的例子如下</p>
+<pre><code class="language-Python">import matplotlib as mpl
+import matplotlib.pyplot as plt
+
+cmap = mpl.colors.ListedColormap(
+    [&quot;darkorange&quot;, &quot;gold&quot;, &quot;lawngreen&quot;, &quot;lightseagreen&quot;]
+)
+</code></pre>
+<p>列表中的元素可以是 RGBA 值，也可以是颜色的名字。这个 colormap 看起来是这样的</p>
+<figure data-type="image" tabindex="2"><img src="https://ZhaJiMan.github.io/post-images/1606905921632.png" alt="" loading="lazy"></figure>
+<p>正好是我们放入列表中的四种颜色。</p>
+<p><code>cmap.colors</code> 是这个 colormap 的所有颜色组成的列表，而 <code>cmap.N</code> 是含有颜色的数目，显然这里 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>N</mi><mo>=</mo><mn>4</mn></mrow><annotation encoding="application/x-tex">N=4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">4</span></span></span></span>。cmap 作为 <code>ListedColormap</code> 的实例，可以直接被调用，当参数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 为整型时，会返回 <code>cmap</code> 中第 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">x+1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.66666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault">x</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> 个颜色的 RGBA 值。这一关系可以用下图示意</p>
+<figure data-type="image" tabindex="3"><img src="https://ZhaJiMan.github.io/post-images/1606907575394.png" alt="" loading="lazy"></figure>
+<p>对于超出范围的情况：当 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi><mo>&lt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">x&lt;0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathdefault">x</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span></span></span></span> 时，对应于第一个颜色；当 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi><mo>&gt;</mo><mi>N</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">x&gt;N-1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathdefault">x</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> 时，对应于最后一个颜色。于是可以用这样的代码得到 cmap 中所有颜色的 RGBA 值</p>
+<figure data-type="image" tabindex="4"><img src="https://ZhaJiMan.github.io/post-images/1606907649661.png" alt="" loading="lazy"></figure>
+<p>这一特性能让我们用简单的整数来索引 colormap 中的颜色。除此之外，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 还可以是 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0.0</mn><mo separator="true">,</mo><mn>1.0</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0.0, 1.0]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mord">.</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mord">.</span><span class="mord">0</span><span class="mclose">]</span></span></span></span> 区间内的任意浮点值，接着 cmap 会通过最邻近插值法得到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 对应的颜色。虽然表面上说是用到了插值，源码中的实现则是通过 <code>int(x*N)</code>，再作为整数进行索引来实现的。一种等价的、更便于理解的映射如下图</p>
+<figure data-type="image" tabindex="5"><img src="https://ZhaJiMan.github.io/post-images/1606913091571.png" alt="" loading="lazy"></figure>
+<p>即 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span></span></span></span> 个颜色将 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0.0</mn><mo separator="true">,</mo><mn>1.0</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0.0, 1.0]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mord">.</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mord">.</span><span class="mord">0</span><span class="mclose">]</span></span></span></span> 的区间等分为一系列左开右闭的小区间（最后一个区间除外），若浮点型的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 落入第 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">n</span></span></span></span> 个区间，那么便对应第 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">n</span></span></span></span> 个颜色。超出范围的情况与整型参数时相同。举个例子</p>
+<pre><code class="language-Python">cmap_new = mpl.colors.ListedColormap(
+    cmap(np.linspace(0, 1, 5))
+)
+</code></pre>
+<p>cmap_new 看起来会是这个样子</p>
+<figure data-type="image" tabindex="6"><img src="https://ZhaJiMan.github.io/post-images/1606909862264.png" alt="" loading="lazy"></figure>
+<p>因为给出的参数中，最后两个数都落入了最后一个区间，所以都对应于最后那个颜色。</p>
+<h3 id="12-linearsegmentedcolormap">1.2 LinearSegmentedColormap</h3>
+<p>顾名思义，是通过线性分段构建的 colormap。首先给定几个颜色的锚点，然后锚点之间的颜色会通过线性插值得出。创建这种 colormap 的方法比较枯燥和难以理解，并且也较少使用，我们一般会直接使用现成的 colormap（例如 jet 和 rainbow），所以这里不再叙述。如果真有手动创建的需求，也建议使用 <code>LinearSegmentedColormap.from_list</code> 函数来生成。</p>
+<p>下面便来调用内置的 colormap</p>
+<pre><code class="language-Python">cmap = mpl.cm.jet
+</code></pre>
+<p>cmap 看起来是这样的</p>
+<figure data-type="image" tabindex="7"><img src="https://ZhaJiMan.github.io/post-images/1606911506779.png" alt="" loading="lazy"></figure>
+<p>与 <code>ListedColormap</code> 相比，<code>LinearSegmentedColormap</code> 依旧有 <code>cmap.N</code> 属性，默认数值为 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>256</mn></mrow><annotation encoding="application/x-tex">256</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span><span class="mord">5</span><span class="mord">6</span></span></span></span>。但是没有了 <code>cmap.colors</code>，不能直接列出这 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span></span></span></span> 个颜色的 RGBA 值。</p>
+<p>cmap 依旧可以被直接调用：当参数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 为整型时，对应于第 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">x+1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.66666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault">x</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> 个颜色；而当参数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 为浮点型时，则会通过线性插值获取相邻两个颜色中间的颜色。因此，<code>LinearSegmentedColormap</code> 的重采样不仅不会出现重复的颜色，还能得到更为连续渐变的颜色。</p>
+<h3 id="13-get_cmap-函数">1.3 get_cmap 函数</h3>
+<p>这里介绍一个方便的函数。我们通过直接调用 cmap 能够进行重采样，可惜得到的结果是颜色数组而非 <code>Colormap</code> 实例，还需要再把数组转化为 colormap。而 <code>mpl.cm.get_cmap</code> 函数能简化这一步，直接返回 colormap 对象</p>
+<pre><code class="language-Python"># 等价于mpl.cm.jet(np.linspace(0, 1, 8),再创建对象
+cmap = mpl.cm.get_cmap('jet', 8)
+</code></pre>
+<p>效果如下图。并且还保证了 cmap 依旧是 <code>LinearSegmentedColormap</code> 对象。</p>
+<figure data-type="image" tabindex="8"><img src="https://ZhaJiMan.github.io/post-images/1606912509206.png" alt="" loading="lazy"></figure>
+<h3 id="14-set_under-set_over与-set_bad">1.4 set_under、set_over，与 set_bad</h3>
+<p>1.1 节中提到过，直接调用 cmap 时，若参数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 超出范围，那么会映射给第一个/最后一个颜色。而 <code>cmap.set_under</code> 方法能够改变 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi><mo>&lt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">x&lt;0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathdefault">x</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span></span></span></span> 或 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi><mo>&lt;</mo><mn>0.0</mn></mrow><annotation encoding="application/x-tex">x&lt;0.0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathdefault">x</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span><span class="mord">.</span><span class="mord">0</span></span></span></span> 时对应的颜色，<code>cmap.set_over</code> 方法能够改变 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi><mo>&gt;</mo><mi>N</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">x&gt;N-1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathdefault">x</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> 或 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi><mo>&gt;</mo><mn>1.0</mn></mrow><annotation encoding="application/x-tex">x &gt; 1.0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathdefault">x</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord">.</span><span class="mord">0</span></span></span></span> 时对应的颜色。<code>cmap.set_bad</code> 则能改变缺测值（NaN 或 masked）对应的颜色（缺测值的绘图规则请参考之前的博文 <a href="https://zhajiman.github.io/post/numpy_missing_value/">NumPy 中的缺测值处理</a>）。</p>
+<p>使用 <code>plt.colorbar</code> 函数画图时，通过 <code>extend</code> 参数可以指定是否在 colorbar 两端显示出 under 与 over 时的颜色。下面为一个例子</p>
+<pre><code class="language-Python">cmap = mpl.cm.get_cmap('jet', 8)
+cmap.set_under('black')
+cmap.set_over('white')
+</code></pre>
+<figure data-type="image" tabindex="9"><img src="https://ZhaJiMan.github.io/post-images/1606913348738.png" alt="" loading="lazy"></figure>
+<h2 id="2-normalization">2. Normalization</h2>
+<p>上一节的重点是，colormap 能把 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0.0</mn><mo separator="true">,</mo><mn>1.0</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0.0, 1.0]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mord">.</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mord">.</span><span class="mord">0</span><span class="mclose">]</span></span></span></span> 或 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0</mn><mo separator="true">,</mo><mi>N</mi><mo>−</mo><mn>1</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0, N-1]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">]</span></span></span></span> 范围内的值映射到颜色上，那么这一节就要来叙述如何通过归一化（Normalization）把原始数据映射到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0.0</mn><mo separator="true">,</mo><mn>1.0</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0.0, 1.0]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mord">.</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mord">.</span><span class="mord">0</span><span class="mclose">]</span></span></span></span> 或 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0</mn><mo separator="true">,</mo><mi>N</mi><mo>−</mo><mn>1</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0, N-1]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">]</span></span></span></span> 上。用于归一化的对象都存储在 <code>mpl.colors</code> 模块中。</p>
+<h3 id="21-normalize">2.1 Normalize</h3>
+<p>各种二维绘图函数默认使用的归一化方法是 <code>Normalize</code>。给定参数 <code>vmin</code> 和 <code>vmax</code>，它会按照线性关系</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>y</mi><mo>=</mo><mfrac><mrow><mi>x</mi><mo>−</mo><mi>v</mi><mi>m</mi><mi>i</mi><mi>n</mi></mrow><mrow><mi>v</mi><mi>m</mi><mi>a</mi><mi>x</mi><mo>−</mo><mi>v</mi><mi>m</mi><mi>i</mi><mi>n</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">y=\frac{x-vmin}{vmax-vmin}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.10585em;vertical-align:-0.7693300000000001em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3365200000000002em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="mord mathdefault">m</span><span class="mord mathdefault">a</span><span class="mord mathdefault">x</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="mord mathdefault">m</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="mord mathdefault">m</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.7693300000000001em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p>把原始数据 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 映射为 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">y</span></span></span></span>，显然 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">y</span></span></span></span> 的值域为 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0.0</mn><mo separator="true">,</mo><mn>1.0</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0.0, 1.0]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mord">.</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mord">.</span><span class="mord">0</span><span class="mclose">]</span></span></span></span>。如果不给定 <code>vmin</code> 和 <code>vmax</code>，则绘图函数会默认使用原始数据的最小值和最大值来代替。下面是例子</p>
+<figure data-type="image" tabindex="10"><img src="https://ZhaJiMan.github.io/post-images/1606914477369.png" alt="" loading="lazy"></figure>
+<p>可以看到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0</mn><mo separator="true">,</mo><mn>10</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0, 10]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mord">0</span><span class="mclose">]</span></span></span></span> 被映射到了 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0.0</mn><mo separator="true">,</mo><mn>1.0</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0.0, 1.0]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mord">.</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mord">.</span><span class="mord">0</span><span class="mclose">]</span></span></span></span>。接着这些归一化后的值便可以直接传给 colormap，得到一系列颜色用于画图。即便映射后的结果超出了 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0.0</mn><mo separator="true">,</mo><mn>1.0</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0.0, 1.0]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mord">.</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mord">.</span><span class="mord">0</span><span class="mclose">]</span></span></span></span> 的范围，根据第 1 节中的说明，这些超出的值会被映射给第一个/最后一个颜色（或者 under 和 over 指定的颜色）。</p>
+<p>另外，<code>Normalize</code> 还有一个 <code>clip</code> 参数，当它为 True 时，能够把超出范围的值映射为 0.0 或 1.0，不过这样一来，colormap 的 under 与 over 的设置便会失去作用。所以一般我们不用关心 <code>clip</code> 参数，让它默认为 False 就好了。</p>
+<h3 id="22-lognorm-与-powernorm">2.2 LogNorm 与 PowerNorm</h3>
+<p>除了线性的归一化方法，Matplotlib 还提供了非线性的归一化方法，例如对数律的 <code>LogNorm</code> 与 幂律的 <code>PowerNorm</code>，使用方法与 <code>Normalize</code> 基本一致，也是把原始数据映射到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0.0</mn><mo separator="true">,</mo><mn>1.0</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0.0, 1.0]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mord">.</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mord">.</span><span class="mord">0</span><span class="mclose">]</span></span></span></span>，这里不再详述。</p>
+<h3 id="23-boundarynorm">2.3 BoundaryNorm</h3>
+<p>除了线性和非线性的映射，有时我们需要的映射关系很难用函数来表示。例如下图这个例子</p>
+<figure data-type="image" tabindex="11"><img src="https://ZhaJiMan.github.io/post-images/1606918114048.png" alt="" loading="lazy"></figure>
+<p>我们给出了一系列 bin（框子），原始数据落入第几个框（左闭右开），就对应于第几个颜色。而这些框的数值分布是任意给定的，很难用函数来描述。为了实现这种映射，这里引入另一种归一化的类：<code>BoundaryNorm</code>。</p>
+<p>参数 <code>Boundaries</code> 为我们给出的这些 bin 的边界值，要求单调递增；<code>ncolors</code> 则是我们希望与之对应的 colormap 中颜色的数目（即 <code>cmap.N</code>），数值大于等于 nbin（bin 的数量）。</p>
+<p>当 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>n</mi><mi>c</mi><mi>o</mi><mi>l</mi><mi>o</mi><mi>r</mi><mi>s</mi><mo>=</mo><mi>n</mi><mi>b</mi><mi>i</mi><mi>n</mi></mrow><annotation encoding="application/x-tex">ncolors=nbin</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault">n</span><span class="mord mathdefault">c</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault">s</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault">n</span><span class="mord mathdefault">b</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span></span></span></span> 时，映射关系为：若原始数据 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 落入到第 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.65952em;vertical-align:0em;"></span><span class="mord mathdefault">i</span></span></span></span> 个 bin 中（<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>1</mn><mo>≤</mo><mi>i</mi><mo>≤</mo><mi>n</mi><mi>b</mi><mi>i</mi><mi>n</mi></mrow><annotation encoding="application/x-tex">1 \le i \le nbin</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.78041em;vertical-align:-0.13597em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.79549em;vertical-align:-0.13597em;"></span><span class="mord mathdefault">i</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault">n</span><span class="mord mathdefault">b</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span></span></span></span>），那么归一化值 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>y</mi><mo>=</mo><mi>i</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">y=i-1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.74285em;vertical-align:-0.08333em;"></span><span class="mord mathdefault">i</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span>。于是原始数据映射被到了整型的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0</mn><mo separator="true">,</mo><mi>n</mi><mi>c</mi><mi>o</mi><mi>l</mi><mi>o</mi><mi>r</mi><mi>s</mi><mo>−</mo><mn>1</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0, ncolors-1]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault">n</span><span class="mord mathdefault">c</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault">s</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">]</span></span></span></span> 范围中。</p>
+<p>当 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>n</mi><mi>c</mi><mi>o</mi><mi>l</mi><mi>o</mi><mi>r</mi><mi>s</mi><mo>&gt;</mo><mi>n</mi><mi>b</mi><mi>i</mi><mi>n</mi></mrow><annotation encoding="application/x-tex">ncolors &gt; nbin</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.73354em;vertical-align:-0.0391em;"></span><span class="mord mathdefault">n</span><span class="mord mathdefault">c</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault">s</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault">n</span><span class="mord mathdefault">b</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span></span></span></span> 时，从源码可以看到线性映射关系为</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>y</mi><mo>=</mo><mi>i</mi><mi>n</mi><mi>t</mi><mo>(</mo><mfrac><mrow><mi>n</mi><mi>c</mi><mi>o</mi><mi>l</mi><mi>o</mi><mi>r</mi><mi>s</mi><mo>−</mo><mn>1</mn></mrow><mrow><mi>n</mi><mi>b</mi><mi>i</mi><mi>n</mi><mo>−</mo><mn>1</mn></mrow></mfrac><mo>(</mo><mi>i</mi><mo>−</mo><mn>1</mn><mo>)</mo><mo>)</mo></mrow><annotation encoding="application/x-tex">y=int(\frac{ncolors-1}{nbin-1} (i-1))
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.14077em;vertical-align:-0.7693300000000001em;"></span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mord mathdefault">t</span><span class="mopen">(</span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.37144em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">n</span><span class="mord mathdefault">b</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord">1</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">n</span><span class="mord mathdefault">c</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault">s</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.7693300000000001em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mopen">(</span><span class="mord mathdefault">i</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span><span class="mclose">)</span></span></span></span></span></p>
+<p>于是，即便 colormap 中的颜色数目多于 bin 的数目，也依旧可以较为均匀地把原始数据映射到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>[</mo><mn>0</mn><mo separator="true">,</mo><mi>n</mi><mi>c</mi><mi>o</mi><mi>l</mi><mi>o</mi><mi>r</mi><mi>s</mi><mo>−</mo><mn>1</mn><mo>]</mo></mrow><annotation encoding="application/x-tex">[0, ncolors-1]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault">n</span><span class="mord mathdefault">c</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault">s</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">]</span></span></span></span> 范围上。不过我觉得更直接的做法是，先将 colormap 按 nbin 进行重采样，再令 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>n</mi><mi>c</mi><mi>o</mi><mi>l</mi><mi>o</mi><mi>r</mi><mi>s</mi><mo>=</mo><mi>n</mi><mi>b</mi><mi>i</mi><mi>n</mi></mrow><annotation encoding="application/x-tex">ncolors=nbin</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault">n</span><span class="mord mathdefault">c</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault">s</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault">n</span><span class="mord mathdefault">b</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span></span></span></span>。不过，这两种方法的颜色效果略有差异。</p>
+<p>至于超出 <code>Boundaries</code> 范围的部分（包括右边界），under 时会映射为 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">-1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">−</span><span class="mord">1</span></span></span></span>，over 时会映射为 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>n</mi><mi>c</mi><mi>o</mi><mi>l</mi><mi>o</mi><mi>r</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">ncolors</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault">n</span><span class="mord mathdefault">c</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault">s</span></span></span></span>。另外较新版本的 Matplotlib 还添加了 <code>extend</code> 参数，允许为 uner 和 over 的部分留出新的 bin，不过同样是个比较鸡肋的参数。</p>
+<p>下面来表示这个例子</p>
+<figure data-type="image" tabindex="12"><img src="https://ZhaJiMan.github.io/post-images/1606916579067.png" alt="" loading="lazy"></figure>
+<h2 id="3-实际画图">3. 实际画图</h2>
+<p>实际使用函数画图时，我们并不需要手动进行数据的归一化和颜色采样，而只需要提供 colormap 和 norm 对象（即映射关系），绘图函数会根据它们自动完成具体的计算。</p>
+<p>例如，对于函数 <code>pcolormesh</code>，默认会使用 viridis 作为 colormap，默认使用线性映射的 Normalize，并用原始数据的最小值和最大值作为 vmin 和 vmax。</p>
+<p>对于函数 <code>contourf</code>，行为与 <code>pcolormesh</code> 类似，但是其 <code>levels</code> 参数比较微妙。<code>levels</code> 能指定哪些数值范围内有颜色填充，可以像 <code>Boundaries</code> 参数一样随意指定区间。不过若已经使用了 <code>BoundaryNorm</code>，而 <code>levels</code> 与 <code>Boundaries</code> 不匹配时，则经常得不到想要的结果。</p>
+<p>下面是一个人为给定等值线区间来画图的例子</p>
+<pre><code class="language-Python">import numpy as np
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+
+# 生成原始数据.
+N = 100
+X, Y = np.meshgrid(np.linspace(-3, 3, N), np.linspace(-2, 2, N))
+Z1 = np.exp(-X**2 - Y**2)
+Z2 = np.exp(-(X - 1)**2 - (Y - 1)**2)
+Z = ((Z1 - Z2) * 2)
+
+# 人为指定的范围.
+bounds = np.arange(-1.5, 1.5+0.25, 0.25)
+nbin = bounds.size
+
+# 利用nbin对cmap进行重采样,使cmap只有nbin个颜色.
+cmap = mpl.cm.get_cmap('RdBu_r', nbin)
+cmap.set_under('cyan')
+cmap.set_over('darkviolet')
+
+# 生成BoundaryNorm实例.
+norm = mpl.colors.BoundaryNorm(bounds, nbin)
+
+fig, axes = plt.subplots(1, 2, figsize=(8, 3))
+
+im = axes[0].pcolormesh(X, Y, Z, norm=norm, cmap=cmap, shading='nearest')
+fig.colorbar(im, ax=axes[0], orientation='vertical', extend='both')
+axes[0].set_title('pcolormesh')
+
+# 为了画出正确的图像,要求levels=bounds.
+# extend参数只能在contourf中指定,而不能在colorbar中指定.
+im = axes[1].contourf(X, Y, Z, norm=norm, cmap=cmap, extend='both', levels=bounds)
+fig.colorbar(im, ax=axes[1], orientation='vertical')
+axes[1].set_title('contourf')
+
+plt.show()
+</code></pre>
+<figure data-type="image" tabindex="13"><img src="https://ZhaJiMan.github.io/post-images/1606921097915.png" alt="" loading="lazy"></figure>
+<h2 id="参考链接">参考链接</h2>
+<p><a href="https://matplotlib.org/3.3.3/api/colors_api.html">matplotlib.colors</a><br>
+以及其中的各种子链接。</p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://ZhaJiMan.github.io/post/multiprocessing/">
+              <h3 class="post-title">
+                下一篇：在 Python 用进程池搞并行
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+        
+          <div id="gitalk-container"></div>
+        
+
+        
+      
+
+      <div class="site-footer">
+  <div class="slogan">炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://ZhaJiMan.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'd3e98a2219dd32298c8a',
+        clientSecret: '04b6ce88dc40c267a998b38f9b245b259b91dc2b',
+        repo: 'ZhaJiMan.github.io',
+        owner: 'ZhaJiMan',
+        admin: ['ZhaJiMan'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>
