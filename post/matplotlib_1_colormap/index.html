@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1606922611281">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1607130330544">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
 
@@ -36,7 +36,7 @@
   <div class="site-header">
     <div class="left">
       <a href="https://ZhaJiMan.github.io">
-        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1606922611281" alt="" width="32px" height="32px">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1607130330544" alt="" width="32px" height="32px">
       </a>
       <a href="https://ZhaJiMan.github.io">
         <h1 class="site-title">炸 鸡 人</h1>
@@ -198,7 +198,7 @@ Z = ((Z1 - Z2) * 2)
 
 # 人为指定的范围.
 bounds = np.arange(-1.5, 1.5+0.25, 0.25)
-nbin = bounds.size
+nbin = bounds.size - 1
 
 # 利用nbin对cmap进行重采样,使cmap只有nbin个颜色.
 cmap = mpl.cm.get_cmap('RdBu_r', nbin)
@@ -222,7 +222,7 @@ axes[1].set_title('contourf')
 
 plt.show()
 </code></pre>
-<figure data-type="image" tabindex="13"><img src="https://ZhaJiMan.github.io/post-images/1606921097915.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="13"><img src="https://ZhaJiMan.github.io/post-images/1607130293100.png" alt="" loading="lazy"></figure>
 <h2 id="参考链接">参考链接</h2>
 <p><a href="https://matplotlib.org/3.3.3/api/colors_api.html">matplotlib.colors</a><br>
 以及其中的各种子链接。</p>
