@@ -2,14 +2,14 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://ZhaJiMan.github.io</id>
     <title>炸 鸡 人</title>
-    <updated>2020-12-07T07:22:23.174Z</updated>
+    <updated>2021-03-24T02:16:43.791Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://ZhaJiMan.github.io"/>
     <link rel="self" href="https://ZhaJiMan.github.io/atom.xml"/>
     <subtitle>炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。</subtitle>
     <logo>https://ZhaJiMan.github.io/images/avatar.png</logo>
     <icon>https://ZhaJiMan.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2020, 炸 鸡 人</rights>
+    <rights>All rights reserved 2021, 炸 鸡 人</rights>
     <entry>
         <title type="html"><![CDATA[Matplotlib 经验（1）：colormap 的设置]]></title>
         <id>https://ZhaJiMan.github.io/post/matplotlib_1_colormap/</id>
