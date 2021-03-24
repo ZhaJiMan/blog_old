@@ -1,0 +1,366 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>在 Cartopy 中为 Lambert 投影地图添加刻度 | 炸 鸡 人</title>
+<meta name="description" content="炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1616574072931">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://ZhaJiMan.github.io">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1616574072931" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://ZhaJiMan.github.io">
+        <h1 class="site-title">炸 鸡 人</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+            <div class="feature-container" style="background-image: url('https://ZhaJiMan.github.io/post-images/lambert_projection.png')">
+            </div>
+          
+          <h2 class="post-title">在 Cartopy 中为 Lambert 投影地图添加刻度</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2021-03-24</span>
+            
+          </div>
+          <div class="post-content">
+            <h2 id="前言">前言</h2>
+<p>Cartopy 中的 Plate Carrée 投影使用方便，但在展示中国地图时会使中国的形状显得很瘪，与之相比，Lambert 投影的效果会更加美观，下图显示了两种投影的差异</p>
+<figure data-type="image" tabindex="1"><img src="https://ZhaJiMan.github.io/post-images/1616555848856.png" alt="" loading="lazy"></figure>
+<p>所以本文将会介绍如何在 Cartopy 中实现 Lambert 投影，并为地图添上合适的刻度。文中 Cartopy 的版本是 0.18.0。</p>
+<h2 id="lambert-投影的简单介绍">Lambert 投影的简单介绍</h2>
+<p>这里的 Lambert 投影指的是 Lambert conformal conic 投影（兰勃特等角圆锥投影），是通过让圆锥面与地球相切（割），然后将地球表面投影到圆锥面上来实现的。作为一种等角地图投影，Lambert 投影能够较好地保留区域的角度和形状，适合用于对中纬度东西方向分布的大陆板块进行制图。详细的描述请见维基和 <a href="https://desktop.arcgis.com/zh-cn/arcmap/latest/map/projections/lambert-conformal-conic.htm">ArcMap 上的介绍</a>。</p>
+<p>在 Cartopy 中，这一投影通过 <code>LambertConformal</code> 类来实现</p>
+<pre><code class="language-Python">import cartopy.crs as ccrs
+map_proj = ccrs.LambertConformal(
+    central_longitude=105, standard_parallels=(25, 47)
+)
+</code></pre>
+<p>这个类的参数有很多，这里为了画出中国地图，只需要指定中央经线 <code>central_longitude=105</code>，两条标准纬线 <code>standard_parallels=(25, 47)</code>，参数来源是 <a href="http://blog.sina.com.cn/s/blog_4aa4593d0102ziux.html">中国区域Lambert&amp;Albers投影参数</a> 这篇博文。其实笔者对这些参数也没什么概念，如果有错误还请读者指出。</p>
+<p>按照这个设置便可以画出全球的地图了，并且中国位于地图中心</p>
+<figure data-type="image" tabindex="2"><img src="https://ZhaJiMan.github.io/post-images/1616566724590.png" alt="" loading="lazy"></figure>
+<h2 id="用-set_extent-方法截取区域">用 set_extent 方法截取区域</h2>
+<p>我们一般需要通过 <code>GeoAxes</code> 的 <code>set_extent</code> 方法截取我们关心的区域，下面截取 80°E-130°E，15°N-55°N 的范围</p>
+<pre><code class="language-Python">extent = [80, 130, 15, 55]
+ax.set_extent(extent, crs=ccrs.PlateCarree())
+</code></pre>
+<p>结果如下图，原本扇形的全球地图会被截取成矩形</p>
+<figure data-type="image" tabindex="3"><img src="https://ZhaJiMan.github.io/post-images/1616567180978.png" alt="" loading="lazy"></figure>
+<p>道理上来说给出经纬度的边界，截取出来的应该是一个更小的扇形，但按 <a href="https://github.com/SciTools/cartopy/issues/697">issue #697</a> 的说法，<code>set_extent</code> 会选出一个刚好包住这个小扇形的矩形作为边界。这里来验证一下这个说法</p>
+<pre><code class="language-Python">import matplotlib as mpl
+rect = mpl.path.Path([
+    [extent[0], extent[2]],
+    [extent[0], extent[3]],
+    [extent[1], extent[3]],
+    [extent[1], extent[2]],
+    [extent[0], extent[2]]
+]).interpolated(20)
+line = rect.vertices
+ax.plot(line[:, 0], line[:, 1], lw=1, c='r', transform=ccrs.Geodetic())
+</code></pre>
+<p>这段代码是将 <code>extent</code> 所描述的小扇形画在地图上，结果在上一张图里有。可以看到，这个小扇形确实刚好被矩形边界给包住。</p>
+<p>如果确实需要截取出扇形的区域，可以用 <code>set_boundary</code> 方法，效果如下图</p>
+<pre><code class="language-Python">ax.set_boundary(rect, transform=ccrs.Geodetic())
+</code></pre>
+<figure data-type="image" tabindex="4"><img src="https://ZhaJiMan.github.io/post-images/1616568534071.png" alt="" loading="lazy"></figure>
+<p>截取后反而中国显示不全了，需要重新调整 <code>extent</code> 的值。</p>
+<h2 id="为地图添加刻度默认方法">为地图添加刻度——默认方法</h2>
+<p>Cartopy 的版本在 0.17 及以下时，只支持给 Plate Carrée 和 Mercator 投影的地图添加刻度。一个变通的方法是用 <code>ax.text</code> 方法手动添加刻度标签，例子见 <a href="http://bbs.06climate.com/forum.php?mod=viewthread&amp;tid=95948">Python气象绘图教程</a> 的第 18 期。</p>
+<p>等到了最新的 0.18 版本，<code>gridlines</code> 方法有了给<strong>所有投影</strong>添加刻度标签的能力。下面来测试一下</p>
+<pre><code class="language-Python">ax.gridlines(
+    xlocs=np.arange(-180, 180 + 1, 10), ylocs=np.arange(-90, 90 + 1, 10),
+    draw_labels=True, x_inline=False, y_inline=False,
+    linewidth=0.5, linestyle='--', color='gray'
+)
+</code></pre>
+<p><code>xlocs</code> 与 <code>ylocs</code> 指定网格线的经纬度位置，实际上超出地图边界的网格并不会被画出，所以这里给出的范围比较宽。<code>draw_labels</code> 指示是否画出刻度标签，而 <code>x_inline</code> 与 <code>y_inline</code> 指示这些标签是否画在地图里面。inline 的选项开启后效果比较乱，所以这里都关闭。结果如下图</p>
+<figure data-type="image" tabindex="5"><img src="https://ZhaJiMan.github.io/post-images/1616569744298.png" alt="" loading="lazy"></figure>
+<p>默认的效果十分拉胯，四个方向上都有标签，并且有着多余的旋转效果。那么再修改一下看看</p>
+<pre><code class="language-Python">gl = ax.gridlines(
+    xlocs=np.arange(-180, 180 + 1, 10), ylocs=np.arange(-90, 90 + 1, 10),
+    draw_labels=True, x_inline=False, y_inline=False,
+    linewidth=0.5, linestyle='--', color='gray'
+)
+# 关闭顶部和右边的标签,同时禁用旋转.
+gl.top_labels = False
+gl.right_labels = False
+gl.rotate_labels = False
+</code></pre>
+<figure data-type="image" tabindex="6"><img src="https://ZhaJiMan.github.io/post-images/1616570059800.png" alt="" loading="lazy"></figure>
+<p>结果改善了很多，但仍然有很奇怪的地方：虽然关闭了右边的纬度标签，但经度的标签出现在了两边的 y 轴上。根据 <a href="https://github.com/SciTools/cartopy/issues/1530">issue #1530</a>，一个很不优雅的解决方法是将网格线分两次来画</p>
+<ul>
+<li>
+<p>第一次画出纬线和 90°E-120°E 的经线，并且 <code>draw_label=True</code>。</p>
+</li>
+<li>
+<p>第二次单独画出 70°E、80°E、130°E、140°E 的经线，并且 <code>draw_label=False</code>。</p>
+</li>
+</ul>
+<p>结果这里就不展示了，肯定能去掉 y 轴上的经度标签，但显然这个方法有点“事后擦屁股”的意思。</p>
+<h2 id="为地图添加刻度自制方法">为地图添加刻度——自制方法</h2>
+<p>这里尝试自己写一个添加刻度的函数。思路来自 Cartopy 的 <code>Gridliner</code> 类的源码和 <a href="https://gist.github.com/ajdawson/dd536f786741e987ae4e"><br>
+Labelling grid lines on a Lambert Conformal projection</a> 这篇 note。</p>
+<p>原理是想办法在 Lambert 投影坐标系（这里亦即 Matplotlib 的 data 坐标系）下表示出 xy 轴和网格线的空间位置，若一条网格线与一个轴线相交，那么这个交点的位置即刻度的位置。最后直接将这些位置用于 <code>set_xticks</code> 和 <code>set_yticks</code> 方法。判断两线相交用到了 Shapley 库。代码和效果如下</p>
+<pre><code class="language-Python">import numpy as np
+import shapely.geometry as sgeom
+
+import matplotlib.pyplot as plt
+
+import cartopy.crs as ccrs
+from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+
+def find_x_intersections(ax, xticks):
+    '''找出xticks对应的经线与下x轴的交点在data坐标下的位置和对应的ticklabel.'''
+    # 获取地图的矩形边界和最大的经纬度范围.
+    x0, x1, y0, y1 = ax.get_extent()
+    lon0, lon1, lat0, lat1 = ax.get_extent(ccrs.PlateCarree())
+    xaxis = sgeom.LineString([(x0, y0), (x1, y0)])
+    # 仅选取能落入地图范围内的ticks.
+    lon_ticks = [tick for tick in xticks if tick &gt;= lon0 and tick &lt;= lon1]
+
+    # 每条经线有n_steps个点.
+    n_steps = 50
+    xlocs = []
+    xticklabels = []
+    for tick in lon_ticks:
+        lon_line = sgeom.LineString(
+            ax.projection.transform_points(
+                ccrs.Geodetic(),
+                np.full(n_steps, tick),
+                np.linspace(lat0, lat1, n_steps)
+            )[:, :2]
+        )
+        # 如果经线与x轴有交点,获取其位置.
+        if xaxis.intersects(lon_line):
+            point = xaxis.intersection(lon_line)
+            xlocs.append(point.x)
+            xticklabels.append(tick)
+        else:
+            continue
+
+    # 用formatter添上度数和东西标识.
+    formatter = LongitudeFormatter()
+    xticklabels = [formatter(label) for label in xticklabels]
+
+    return xlocs, xticklabels
+
+def find_y_intersections(ax, yticks):
+    '''找出yticks对应的纬线与左y轴的交点在data坐标下的位置和对应的ticklabel.'''
+    x0, x1, y0, y1 = ax.get_extent()
+    lon0, lon1, lat0, lat1 = ax.get_extent(ccrs.PlateCarree())
+    yaxis = sgeom.LineString([(x0, y0), (x0, y1)])
+    lat_ticks = [tick for tick in yticks if tick &gt;= lat0 and tick &lt;= lat1]
+
+    n_steps = 100
+    ylocs = []
+    yticklabels = []
+    for tick in lat_ticks:
+        # 注意这里与find_x_intersections的不同.
+        lat_line = sgeom.LineString(
+            ax.projection.transform_points(
+                ccrs.Geodetic(),
+                np.linspace(lon0, lon1, n_steps),
+                np.full(n_steps, tick)
+            )[:, :2]
+        )
+        if yaxis.intersects(lat_line):
+            point = yaxis.intersection(lat_line)
+            ylocs.append(point.y)
+            yticklabels.append(tick)
+        else:
+            continue
+
+    formatter = LatitudeFormatter()
+    yticklabels = [formatter(label) for label in yticklabels]
+
+    return ylocs, yticklabels
+
+def set_lambert_ticks(ax, xticks, yticks):
+    '''
+    给一个LambertConformal投影的GeoAxes在下x轴与左y轴上添加ticks.
+
+    要求函数边界是矩形的,即ax需要提前被set_extent方法截取成矩形.
+    否则可能会出现错误.
+
+    Parameters
+    ----------
+    ax : GeoAxes
+        投影为LambertConformal的Axes.
+
+    xticks : list of floats
+        x轴上tick的位置.
+
+    yticks : list of floats
+        y轴上tick的位置.
+
+    Returns
+    -------
+    None
+    '''
+    # 设置x轴.
+    xlocs, xticklabels = find_x_intersections(ax, xticks)
+    ax.set_xticks(xlocs)
+    ax.set_xticklabels(xticklabels)
+    # 设置y轴.
+    ylocs, yticklabels = find_y_intersections(ax, yticks)
+    ax.set_yticks(ylocs)
+    ax.set_yticklabels(yticklabels)
+</code></pre>
+<figure data-type="image" tabindex="7"><img src="https://ZhaJiMan.github.io/post-images/1616572983317.png" alt="" loading="lazy"></figure>
+<p>这次的效果就好很多了，并且相比于默认方法，坐标轴上也有了刻度的凸起。需要注意的是，这个方法要求在设置刻度之前就通过 <code>set_extent</code> 方法截取出矩形的边界，否则可能有奇怪的结果。另外经测试对 Albers 投影也适用。</p>
+<p>也许下次更新后 Cartopy 的刻度标注功能能得到改善，就算没有，我们也可以根据上面描述的思路来自制刻度。</p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://ZhaJiMan.github.io/post/matplotlib_1_colormap/">
+              <h3 class="post-title">
+                下一篇：Matplotlib 经验（1）：colormap 的设置
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+        
+          <div id="gitalk-container"></div>
+        
+
+        
+      
+
+      <div class="site-footer">
+  <div class="slogan">炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://ZhaJiMan.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'd3e98a2219dd32298c8a',
+        clientSecret: '04b6ce88dc40c267a998b38f9b245b259b91dc2b',
+        repo: 'ZhaJiMan.github.io',
+        owner: 'ZhaJiMan',
+        admin: ['ZhaJiMan'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>
