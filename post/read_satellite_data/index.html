@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1616835140672">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1617962632486">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
 
@@ -36,7 +36,7 @@
   <div class="site-header">
     <div class="left">
       <a href="https://ZhaJiMan.github.io">
-        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1616835140672" alt="" width="32px" height="32px">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1617962632486" alt="" width="32px" height="32px">
       </a>
       <a href="https://ZhaJiMan.github.io">
         <h1 class="site-title">炸 鸡 人</h1>
@@ -97,13 +97,13 @@
           <div class="post-content">
             <p>NCL 读取各种卫星数据仅需一行命令，且会自动处理缺测值和缩放。但如果想用 Python 来读取数据，则需要依赖多个独立的库，更头疼的是，它们的调用方法差别很大，需要分别去官方文档学习。这里就总结一下那些最基础最有用的调用方法，以便以后抄来用。同时在这里建议，在读取任何数据前，先用 NASA 的 Panoply 软件操弄一番，直观地看看需要的量叫什么、有哪些属性。</p>
 <h2 id="modis">MODIS</h2>
-<p>MODIS 采用的格式是基于 HDF4 的 HDF-EOS2，这是 NASA 专门为 EOS（Earth Observing System）系列卫星设计的数据格式。相比于标准的 HDF4，HDF-EOS2 引入了新的数据类型（point、grid，和 swath），并且能让用户根据地理信息读取数据。</p>
+<p>MODIS 采用的格式是基于 HDF4 的 HDF-EOS2，这是 NASA 专门为 EOS（Earth Observing System）系列卫星设计的数据格式。相比于标准的 HDF4，HDF-EOS2 引入了新的数据类型（point、grid，和 swath），并且能让用户根据地理信息读取数据。更多介绍可见博文 <a href="https://www.cnblogs.com/94cool/archive/2013/06/28/3160249.html">HDF及HDF-EOS数据格式简介</a> 和 <a href="http://www.ncl.ucar.edu/Applications/HDF.shtml">NCL 官网的说明</a>。</p>
 <figure data-type="image" tabindex="1"><img src="https://ZhaJiMan.github.io/post-images/1594522535571.png" alt="" loading="lazy"></figure>
-<p>Python 中可以用 <a href="http://fhs.github.io/pyhdf/">pyhdf</a> 库来读取 MODIS 的数据。首先需要引入<code>SD</code>模块中的<code>SD</code>和<code>SDC</code>类</p>
+<p>Python 中可以用 <code>pyhdf</code> 包来读取 MODIS 的数据，官网为 <a href="http://fhs.github.io/pyhdf/">pyhdf 0.10.2 documentation</a>。首先需要引入<code>SD</code>模块中的<code>SD</code>和<code>SDC</code>类</p>
 <pre><code class="language-Python">from pyhdf.SD import SD, SDC
 </code></pre>
 <p><code>SD</code>（scientific dataset）模块提供了对 HDF4 的科学数据集（Scientific Data Set，SDS）的 API。所谓 SDS 其实就相当于 numpy 数组，只不过还附有相应的属性。<code>SD</code>类能够打开、关闭文件，<code>SDC</code>类存有关于文件读写模式、数据类型的常量。下面介绍一些常用的用于读取的功能</p>
-<pre><code class="language-Python"># 读取文件
+<pre><code class="language-Python"># 读取文件,注意pyhdf不支持with语句
 f = SD(file_name, SDC.READ)
 # 返回一个二元元组,指示文件含有的数据集数量,以及属性的数量
 f.info()
@@ -114,7 +114,7 @@ f.datasets()
 # 用序号或者名字来定位数据集,返回一个SDS类
 sds = f.select(sdsname)
 
-# 可以用numpy的操作来从数据集中提取数组
+# 数据集支持各种切片操作,返回numpy数组
 data = sds[:]
 # 返回关于维度的词典
 dims = sds.dimensions()
@@ -132,15 +132,13 @@ add_offset = attrs['add_offset']
 data = np.ma.masked_values(data, fill_value)
 data = (data - add_offset) * scale_factors
 </code></pre>
+<p>其中缩放处理的公式来自 <a href="http://hdfeos.org/zoo/Data_Collection/LAADS_MYD.pdf">HDF-EOS 网的说明 PDF</a>。</p>
 <p><strong>参考链接</strong><br>
-<a href="https://www.cnblogs.com/94cool/archive/2013/06/28/3160249.html">HDF及HDF-EOS数据格式简介</a><br>
-<a href="http://www.ncl.ucar.edu/Applications/HDF.shtml">NCL: HDF</a><br>
 <a href="https://atmosphere-imager.gsfc.nasa.gov/products/aerosol/format-content">MODIS Aerosol Product Fromat &amp; Content</a><br>
-<a href="https://moonbooks.org/Articles/How-to-read-a-MODIS-HDF-file-using-python-/">How to read a MODIS HDF4 file using python and pyhdf ?</a><br>
-<a href="http://fhs.github.io/pyhdf/modules/SD.html">pyhdf SD API</a></p>
+<a href="https://moonbooks.org/Articles/How-to-read-a-MODIS-HDF-file-using-python-/">How to read a MODIS HDF4 file using python and pyhdf ?</a></p>
 <h2 id="gpm-dpr-gmi">GPM DPR &amp; GMI</h2>
 <p>GPM 核心卫星上搭载的 DPR 和 GMI 都采用 HDF5 作为数据产品的格式，相比于上一代的 HDF4，HDF5 有容量更大、数据类型更完善、并行支持更佳等优势，不过这两种格式互不兼容。</p>
-<p>Python 中可以用 <a href="http://docs.h5py.org/en/stable/">h5py</a> 库来读取 HDF5 文件。一个 HDF5 文件主要由数据集（dataset）和组（group）两种对象组成，数据集就相当于 numpy 数组，组则相当于给数据分类的文件夹（或路径）。下面举一些读取的例子</p>
+<p>Python 中可以用 <code>h5py</code> 包来读取 HDF5 文件。一个 HDF5 文件主要由数据集（dataset）和组（group）两种对象组成，数据集就相当于 numpy 数组，组则相当于给数据分类的目录。下面举一些读取的例子</p>
 <pre><code class="language-Python">import h5py
 
 # 读取文件,返回一个文件对象.f相当于根路径&quot;/&quot;代表的组
@@ -150,7 +148,7 @@ f_attrs = f.attrs
 # 打印出文件含有的子组名
 print(list(f.keys()))
 # 可以用相对路径或绝对路径的字符串索引子组
-# 子组的操作跟文件类似,这里不赘述
+# 子组的操作跟目录类似,这里不赘述
 grp = f['/group']
 
 # 直接从文件索引数据集
@@ -161,7 +159,7 @@ data = dset[:]
 attrs = dset.attrs
 fill_value = attrs['_FillValue']
 </code></pre>
-<p>值得注意的是，在 h5py 中，文件、组，和属性都是类似于词典的对象，可以活用<code>keys()</code>、<code>values()</code>、<code>items()</code> 等方法，还可以直接索引键名来进行探索。另外 h5py 不包含 masked array 的功能，需要手动处理。</p>
+<p>值得注意的是，在 <code>h5py</code> 中，文件、组，和属性都是类似于词典的对象，可以活用<code>keys()</code>、<code>values()</code>、<code>items()</code> 等方法，还可以直接索引键名来进行探索。另外 <code>h5py</code> 不包含 masked array 的功能，需要手动处理。</p>
 <p><strong>参考链接</strong><br>
 <a href="http://docs.h5py.org/en/stable/index.html">h5py docs</a><br>
 <a href="https://support.hdfgroup.org/products/hdf5_tools/h4toh5/h4vsh5.html">HDF VS. HDF5</a><br>

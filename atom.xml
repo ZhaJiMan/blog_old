@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://ZhaJiMan.github.io</id>
     <title>炸 鸡 人</title>
-    <updated>2021-03-27T08:52:24.346Z</updated>
+    <updated>2021-04-09T10:03:55.258Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://ZhaJiMan.github.io"/>
     <link rel="self" href="https://ZhaJiMan.github.io/atom.xml"/>
@@ -10,6 +10,93 @@
     <logo>https://ZhaJiMan.github.io/images/avatar.png</logo>
     <icon>https://ZhaJiMan.github.io/favicon.ico</icon>
     <rights>All rights reserved 2021, 炸 鸡 人</rights>
+    <entry>
+        <title type="html"><![CDATA[Matplotlib 经验（2）：导出高 DPI 的图片]]></title>
+        <id>https://ZhaJiMan.github.io/post/matplotlib_2_dpi/</id>
+        <link href="https://ZhaJiMan.github.io/post/matplotlib_2_dpi/">
+        </link>
+        <updated>2021-04-08T12:44:01.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="前言">前言</h2>
+<p>昨天一同学问我怎么把已经画好的图片的 DPI 改到 300，以满足期刊对图片清晰度的要求。上网搜索一番后才发现，虽然我经常在 Matplotlib 中用 <code>dpi</code> 参数来调节图片清晰度，但实际上我对这个概念半懂不懂。这次借这个契机调研和总结一下相关的知识。本文将会依次介绍</p>
+<ul>
+<li>分辨率和 DPI 是什么。</li>
+<li>DPI 和清晰度的关系。</li>
+<li>如何导出期刊要求的高 DPI 图片。</li>
+</ul>
+<h2 id="分辨率">分辨率</h2>
+<p>这里的图片指的是位图（bitmap），一张图片由无数个彩色的小像素点组成，Matplotlib 支持的位图格式有 png、jpg、jpeg、png、tiff 等。我们常用分辨率（resolution）来描述图片的大小，例如说一张图片的分辨率是 800 x 400，即指这张图片宽 800 个像素，高 400 个像素。Windows 对一张 jpg 图片打开右键菜单，在“属性”里的“详细信息”里就能看到图片的分辨率，如下图所示</p>
+<figure data-type="image" tabindex="1"><img src="https://ZhaJiMan.github.io/post-images/1617888460638.png" alt="" loading="lazy"></figure>
+<p>在其它领域里分辨率一词通常描述仪器分辨细节的精细程度，而图片的分辨率仅仅是指图片大小，所以对于图片大小来说，一个更准确的术语是 pixel dimensions。不过既然 Windows 的菜单里都这么显示了，那后文将继续沿用分辨率的说法。</p>
+<h2 id="尺寸">尺寸</h2>
+<p>除了用像素数，图片的尺寸还可以用物理单位来描述，用来指定打印时图片在纸上的大小。例如对于一张分辨率为 800 x 400 的图片，我们希望维持原宽高比打印出来，那么可以设定其尺寸为宽 8 英寸，高 4 英寸（1 英寸约为 2.54 厘米）。这个尺寸可以任意设定，毕竟想打印多大完全由你决定。</p>
+<h2 id="dpi-和-ppi">DPI 和 PPI</h2>
+<p>如果说分辨率和尺寸是长度量的话，那么 DPI 和 PPI 就是密度量。它们的定义如下</p>
+<ul>
+<li>
+<p>DPI（dots per inch）：每英寸长度里含有的打印机墨点数。</p>
+</li>
+<li>
+<p>PPI（pixels per inch）：每英寸长度里含有的像素数。</p>
+</li>
+</ul>
+<p>DPI 表现的是打印机的精细程度。对于同样大小的纸张，打印机的 DPI 更高，打印时就会用上更多墨点，那么打印效果自然也更好。</p>
+<p>电子设备借鉴了打印设备里 DPI 的概念，用 PPI 来衡量像素点的物理尺寸。PPI 对于显示器和图片的意义稍有不同，下面来分别介绍。首先，显示器的 PPI 计算公式为</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">P</mi><mi mathvariant="normal">I</mi></mrow><mo>=</mo><mi mathvariant="normal">对</mi><mi mathvariant="normal">角</mi><mi mathvariant="normal">线</mi><mi mathvariant="normal">像</mi><mi mathvariant="normal">素</mi><mi mathvariant="normal">数</mi><mi mathvariant="normal">/</mi><mi mathvariant="normal">对</mi><mi mathvariant="normal">角</mi><mi mathvariant="normal">线</mi><mi mathvariant="normal">物</mi><mi mathvariant="normal">理</mi><mi mathvariant="normal">长</mi><mi mathvariant="normal">度</mi></mrow><annotation encoding="application/x-tex">\rm{PPI}=对角线像素数/对角线物理长度
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord"><span class="mord mathrm">P</span><span class="mord mathrm">P</span><span class="mord mathrm">I</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord cjk_fallback">对</span><span class="mord cjk_fallback">角</span><span class="mord cjk_fallback">线</span><span class="mord cjk_fallback">像</span><span class="mord cjk_fallback">素</span><span class="mord cjk_fallback">数</span><span class="mord mathrm">/</span><span class="mord cjk_fallback">对</span><span class="mord cjk_fallback">角</span><span class="mord cjk_fallback">线</span><span class="mord cjk_fallback">物</span><span class="mord cjk_fallback">理</span><span class="mord cjk_fallback">长</span><span class="mord cjk_fallback">度</span></span></span></span></span></span></p>
+<p>给定屏幕大小，PPI 更高则屏幕含有的像素数更多，那么显示效果会更好。例如苹果的 iPhone 就强调其 Retina 屏幕的像素密度高达 326 PPI，有着超出人眼识别能力的细腻效果（广告语看看就得了）。</p>
+<p>对图片来说，PPI 和 DPI 这两个术语经常混淆使用，例如 Windows 菜单就称呼图片单位英寸的像素数为 DPI，那么后文也会沿用这一说法。图片 DPI 的计算方法是</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mrow><mi mathvariant="normal">水</mi><mi mathvariant="normal">平</mi><mi mathvariant="normal">D</mi><mi mathvariant="normal">P</mi><mi mathvariant="normal">I</mi></mrow><mo>=</mo><mi mathvariant="normal">宽</mi><mi mathvariant="normal">度</mi><mi mathvariant="normal">像</mi><mi mathvariant="normal">素</mi><mi mathvariant="normal">数</mi><mi mathvariant="normal">/</mi><mi mathvariant="normal">物</mi><mi mathvariant="normal">理</mi><mi mathvariant="normal">宽</mi><mi mathvariant="normal">度</mi></mrow><annotation encoding="application/x-tex">\rm{水平DPI}=宽度像素数/物理宽度
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord"><span class="mord cjk_fallback">水</span><span class="mord cjk_fallback">平</span><span class="mord mathrm">D</span><span class="mord mathrm">P</span><span class="mord mathrm">I</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord cjk_fallback">宽</span><span class="mord cjk_fallback">度</span><span class="mord cjk_fallback">像</span><span class="mord cjk_fallback">素</span><span class="mord cjk_fallback">数</span><span class="mord mathrm">/</span><span class="mord cjk_fallback">物</span><span class="mord cjk_fallback">理</span><span class="mord cjk_fallback">宽</span><span class="mord cjk_fallback">度</span></span></span></span></span></span></p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mrow><mi mathvariant="normal">垂</mi><mi mathvariant="normal">直</mi><mi mathvariant="normal">D</mi><mi mathvariant="normal">P</mi><mi mathvariant="normal">I</mi></mrow><mo>=</mo><mi mathvariant="normal">高</mi><mi mathvariant="normal">度</mi><mi mathvariant="normal">像</mi><mi mathvariant="normal">素</mi><mi mathvariant="normal">数</mi><mi mathvariant="normal">/</mi><mi mathvariant="normal">物</mi><mi mathvariant="normal">理</mi><mi mathvariant="normal">高</mi><mi mathvariant="normal">度</mi></mrow><annotation encoding="application/x-tex">\rm{垂直DPI}=高度像素数/物理高度
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord"><span class="mord cjk_fallback">垂</span><span class="mord cjk_fallback">直</span><span class="mord mathrm">D</span><span class="mord mathrm">P</span><span class="mord mathrm">I</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord cjk_fallback">高</span><span class="mord cjk_fallback">度</span><span class="mord cjk_fallback">像</span><span class="mord cjk_fallback">素</span><span class="mord cjk_fallback">数</span><span class="mord mathrm">/</span><span class="mord cjk_fallback">物</span><span class="mord cjk_fallback">理</span><span class="mord cjk_fallback">高</span><span class="mord cjk_fallback">度</span></span></span></span></span></span></p>
+<p>可以看出，DPI 就是将图片从像素尺寸缩放到物理尺寸的比值。另外，DPI 的倒数即每个像素的单位物理长度，因为我们总是希望像素的物理形状是正方形，所以大多数情况下水平 DPI 就等于垂直 DPI，这样打印出来的图片也能维持原有的宽高比。</p>
+<p>一些图片格式会记录图片的 DPI 值，Windows 下图片的右键菜单属性栏里便能看到。我们在对图片进行排版或打印时，软件会根据图片的分辨率和 DPI 自动设定图片的纸上尺寸。不过如果你想把图片打印大点，那么根据定义计算，图片 DPI 会变小；想打印小点，图片 DPI 就会变大——没错，DPI 并不是图片的固有属性，真正决定 DPI 的是图片分辨率和你想要的纸上尺寸，右键菜单属性栏里的数值屁用没有。这一点还可以从两个例子说明，一是 png 格式压根不含 DPI 值，你得根据打印需求自己去算；二是可以用 Pillow 库直接修改图片的 DPI 值</p>
+<pre><code class="language-Python">from PIL import Image
+
+# test1.tif的原始DPI为50
+img = Image.open('test1.tif')
+img.save('test2.tif', dpi=(300, 300), compression=None)
+</code></pre>
+<p>用上面的代码可以把一张特别糊的图片改成 300 DPI 的“出版级”图片，然而图片清晰度和体积一点没变，依旧说明图片元信息（metadata）里的 DPI 值只是个摆设。</p>
+<h2 id="dpi-与清晰度">DPI 与清晰度</h2>
+<p>我们可能听过 DPI 越高越清晰的说法，这里需要明确，DPI 是打印机、显示器，还是图片的 DPI？清晰是指什么东西清晰？</p>
+<p>原则上打印机的 DPI 越高，打印出的纸质图片越清晰；显示器的 PPI 越高，显示效果越好。对图片则要分情况讨论。如果给定图片分辨率，DPI 越高，打印出来的纸质图片越小，虽然越小越不容易看出瑕疵，但那也不能说成是打印效果更好。如果给定纸上尺寸，DPI 越高，图片的像素数越多，于是问题转化成了：图片像素越多，就会越清晰吗？</p>
+<p>答案是不一定，示意图如下（转自知乎专栏 <a href="https://zhuanlan.zhihu.com/p/43108622">影响图像画质的因素：图片的分辨率和像素浅谈</a>）</p>
+<figure data-type="image" tabindex="2"><img src="https://ZhaJiMan.github.io/post-images/1617956015248.jpg" alt="" loading="lazy"></figure>
+<p>每一排从右往左，采样分辨率从 50 x 50 降至 1 x 1，清晰度显著下降，说明像素越多越清晰；但第一排到第二排将分辨率用 PS 放大到 10 倍，清晰度并没有显著提高，只是像加了柔和滤镜一样。就我个人的理解，只有在从源头生成图片的过程中才有像素越多越清晰的规律，例如拍照时采样了更多像素点、画画时用更多像素描绘细节等；如果只是对图片进行后处理来增多像素的话就不一定能更清晰，例如各种插值方法。</p>
+<p>回到前面的问题，给定纸上尺寸时，DPI 越高图片像素数越多，说明图片本身<strong>很可能</strong>会更清晰，那么在不超出打印机 DPI 水平的前提下，打印出来的纸质图片也很可能更清晰。</p>
+<h2 id="期刊的-300-dpi-要求">期刊的 300 DPI 要求</h2>
+<p>由上一节的讨论，我们便能理解期刊为什么对配图的 DPI 有要求了，因为高 DPI 预示着配图在杂志上的显示效果应该会很好（无论是纸质版还是电子版）。下面以 AGU（美国地球物理学会）对位图的要求为例，用 Matplotlib 演示导出高 DPI 图片的方法。</p>
+<figure data-type="image" tabindex="3"><img src="https://ZhaJiMan.github.io/post-images/1617958065786.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="4"><img src="https://ZhaJiMan.github.io/post-images/1617958853112.png" alt="" loading="lazy"></figure>
+<p>要求 tif 和 jpg 格式的图片在期刊的纸面尺寸上有 300 - 600 的 DPI，tif 图采用 LZW 压缩，jpg 图选择最高的 quality。1/4 版面大小的图片尺寸是 95 x 115 mm。程序如下</p>
+<pre><code class="language-Python">import matplotlib.pyplot as plt
+
+w = 95 / 10 / 2.54
+h = 115 / 10 / 2.54
+fig = plt.figure(figsize=(w, h))
+
+fig.savefig('output.tif', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
+fig.savefig('output.jpg', dpi=600, pil_kwargs={'quality': 95})
+</code></pre>
+<p><code>plt.figure</code> 函数的 <code>figsize</code> 参数要求单位为英寸，所以要先把版面尺寸的单位从毫米换算到英寸。<code>fig.savefig</code> 方法里可以直接指定 DPI，压缩方法这种与图片格式相关的参数需要传给 PIL 来实现。最后能得到两张分辨率为 2244 x 2716，600 DPI 的图片。需要注意如果 <code>dpi</code> 参数的值太高，生成的图片的分辨率和体积太大。</p>
+<p>在 Matplotlib 中，给定 <code>dpi</code>，<code>figsize</code> 越大，绘制同一个元素时会用到更多像素，所以最后导出的图片会更清晰。此即前面提过的从源头上生成清晰的图片。而后处理增加 DPI 的方法也有：导入 PS 中插值放大；粘贴到 PPT 修改 slide 的分辨率和 DPI，再导出整张 slide；用 AI 把位图转换成矢量图等。后处理方法的问题在于，如果处理前图片就很糊，那么处理后只能得到高 DPI 的假高清图。</p>
+<p>当然，最最简单的方式是，从一开始就不要画位图，全部以矢量图的格式导出（eps、pdf 等），这样就完全没有本文中的问题了，所以本文白写了（悲）。</p>
+<h2 id="额外说明">额外说明</h2>
+<p>额外说明一点搜到的实用小知识。</p>
+<p>Matplotlib 中的线宽和字体字号是以磅（point）为单位的，有</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>1</mn><mtext> </mtext><mrow><mrow><mi mathvariant="normal">p</mi><mi mathvariant="normal">t</mi></mrow><mo>=</mo><mn>1</mn><mi mathvariant="normal">/</mi><mn>72</mn><mtext> </mtext><mrow><mi mathvariant="normal">i</mi><mi mathvariant="normal">n</mi><mi mathvariant="normal">c</mi><mi mathvariant="normal">h</mi></mrow></mrow></mrow><annotation encoding="application/x-tex">1\ \rm{pt}=1/72\ \rm{inch}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mspace"> </span><span class="mord"><span class="mord"><span class="mord mathrm">p</span><span class="mord mathrm">t</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord mathrm">1</span><span class="mord mathrm">/</span><span class="mord mathrm">7</span><span class="mord mathrm">2</span><span class="mspace"> </span><span class="mord"><span class="mord"><span class="mord mathrm">i</span><span class="mord mathrm">n</span><span class="mord mathrm">c</span><span class="mord mathrm">h</span></span></span></span></span></span></span></span></p>
+<p>例如，<code>linewidth=72</code> 时，线宽恰好为 1 英寸。注意这是个物理单位，对应于纸上长度。所以增大 <code>figsize</code> 时图中元素会显得更小更细，而增大 <code>dpi</code> 时图中元素大小不变，但图片像素更多、显示效果更清晰。</p>
+<h2 id="参考资料">参考资料</h2>
+<p><a href="https://en.wikipedia.org/wiki/Dots_per_inch">Dots per inch - Wikipedia</a><br>
+<a href="https://stackoverflow.com/questions/47633546/relationship-between-dpi-and-figure-size">Relationship between dpi and figure size</a><br>
+<a href="https://www.radiologytutor.com/index.php/cases/miscellaneous/63-how-to-ensure-your-images-meet-the-minimum-requirement-for-printing-dpi-explained">How to ensure your images meet the minimum requirement for printing - DPI explained</a><br>
+<a href="https://www.agu.org/Publish-with-AGU/Publish/Author-Resources/Graphic-Requirements">GRAPHIC REQUIREMENTS - AGU</a><br>
+<a href="https://www.zhihu.com/question/23770739/answer/25619192">DPI 和 PPI 的区别是什么？</a><br>
+<a href="https://www.zhihu.com/question/340341384/answer/789781560">照片的分辨率300dpi那么它的水平分辨率和垂直分辨率分别是多少？</a></p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Python 中操作文件和目录的路径]]></title>
         <id>https://ZhaJiMan.github.io/post/python_file_directory/</id>
@@ -1107,13 +1194,13 @@ cmap.set_bad('gray', 1.0)
         <updated>2020-07-12T01:09:10.000Z</updated>
         <content type="html"><![CDATA[<p>NCL 读取各种卫星数据仅需一行命令，且会自动处理缺测值和缩放。但如果想用 Python 来读取数据，则需要依赖多个独立的库，更头疼的是，它们的调用方法差别很大，需要分别去官方文档学习。这里就总结一下那些最基础最有用的调用方法，以便以后抄来用。同时在这里建议，在读取任何数据前，先用 NASA 的 Panoply 软件操弄一番，直观地看看需要的量叫什么、有哪些属性。</p>
 <h2 id="modis">MODIS</h2>
-<p>MODIS 采用的格式是基于 HDF4 的 HDF-EOS2，这是 NASA 专门为 EOS（Earth Observing System）系列卫星设计的数据格式。相比于标准的 HDF4，HDF-EOS2 引入了新的数据类型（point、grid，和 swath），并且能让用户根据地理信息读取数据。</p>
+<p>MODIS 采用的格式是基于 HDF4 的 HDF-EOS2，这是 NASA 专门为 EOS（Earth Observing System）系列卫星设计的数据格式。相比于标准的 HDF4，HDF-EOS2 引入了新的数据类型（point、grid，和 swath），并且能让用户根据地理信息读取数据。更多介绍可见博文 <a href="https://www.cnblogs.com/94cool/archive/2013/06/28/3160249.html">HDF及HDF-EOS数据格式简介</a> 和 <a href="http://www.ncl.ucar.edu/Applications/HDF.shtml">NCL 官网的说明</a>。</p>
 <figure data-type="image" tabindex="1"><img src="https://ZhaJiMan.github.io/post-images/1594522535571.png" alt="" loading="lazy"></figure>
-<p>Python 中可以用 <a href="http://fhs.github.io/pyhdf/">pyhdf</a> 库来读取 MODIS 的数据。首先需要引入<code>SD</code>模块中的<code>SD</code>和<code>SDC</code>类</p>
+<p>Python 中可以用 <code>pyhdf</code> 包来读取 MODIS 的数据，官网为 <a href="http://fhs.github.io/pyhdf/">pyhdf 0.10.2 documentation</a>。首先需要引入<code>SD</code>模块中的<code>SD</code>和<code>SDC</code>类</p>
 <pre><code class="language-Python">from pyhdf.SD import SD, SDC
 </code></pre>
 <p><code>SD</code>（scientific dataset）模块提供了对 HDF4 的科学数据集（Scientific Data Set，SDS）的 API。所谓 SDS 其实就相当于 numpy 数组，只不过还附有相应的属性。<code>SD</code>类能够打开、关闭文件，<code>SDC</code>类存有关于文件读写模式、数据类型的常量。下面介绍一些常用的用于读取的功能</p>
-<pre><code class="language-Python"># 读取文件
+<pre><code class="language-Python"># 读取文件,注意pyhdf不支持with语句
 f = SD(file_name, SDC.READ)
 # 返回一个二元元组,指示文件含有的数据集数量,以及属性的数量
 f.info()
@@ -1124,7 +1211,7 @@ f.datasets()
 # 用序号或者名字来定位数据集,返回一个SDS类
 sds = f.select(sdsname)
 
-# 可以用numpy的操作来从数据集中提取数组
+# 数据集支持各种切片操作,返回numpy数组
 data = sds[:]
 # 返回关于维度的词典
 dims = sds.dimensions()
@@ -1142,15 +1229,13 @@ add_offset = attrs['add_offset']
 data = np.ma.masked_values(data, fill_value)
 data = (data - add_offset) * scale_factors
 </code></pre>
+<p>其中缩放处理的公式来自 <a href="http://hdfeos.org/zoo/Data_Collection/LAADS_MYD.pdf">HDF-EOS 网的说明 PDF</a>。</p>
 <p><strong>参考链接</strong><br>
-<a href="https://www.cnblogs.com/94cool/archive/2013/06/28/3160249.html">HDF及HDF-EOS数据格式简介</a><br>
-<a href="http://www.ncl.ucar.edu/Applications/HDF.shtml">NCL: HDF</a><br>
 <a href="https://atmosphere-imager.gsfc.nasa.gov/products/aerosol/format-content">MODIS Aerosol Product Fromat &amp; Content</a><br>
-<a href="https://moonbooks.org/Articles/How-to-read-a-MODIS-HDF-file-using-python-/">How to read a MODIS HDF4 file using python and pyhdf ?</a><br>
-<a href="http://fhs.github.io/pyhdf/modules/SD.html">pyhdf SD API</a></p>
+<a href="https://moonbooks.org/Articles/How-to-read-a-MODIS-HDF-file-using-python-/">How to read a MODIS HDF4 file using python and pyhdf ?</a></p>
 <h2 id="gpm-dpr-gmi">GPM DPR &amp; GMI</h2>
 <p>GPM 核心卫星上搭载的 DPR 和 GMI 都采用 HDF5 作为数据产品的格式，相比于上一代的 HDF4，HDF5 有容量更大、数据类型更完善、并行支持更佳等优势，不过这两种格式互不兼容。</p>
-<p>Python 中可以用 <a href="http://docs.h5py.org/en/stable/">h5py</a> 库来读取 HDF5 文件。一个 HDF5 文件主要由数据集（dataset）和组（group）两种对象组成，数据集就相当于 numpy 数组，组则相当于给数据分类的文件夹（或路径）。下面举一些读取的例子</p>
+<p>Python 中可以用 <code>h5py</code> 包来读取 HDF5 文件。一个 HDF5 文件主要由数据集（dataset）和组（group）两种对象组成，数据集就相当于 numpy 数组，组则相当于给数据分类的目录。下面举一些读取的例子</p>
 <pre><code class="language-Python">import h5py
 
 # 读取文件,返回一个文件对象.f相当于根路径&quot;/&quot;代表的组
@@ -1160,7 +1245,7 @@ f_attrs = f.attrs
 # 打印出文件含有的子组名
 print(list(f.keys()))
 # 可以用相对路径或绝对路径的字符串索引子组
-# 子组的操作跟文件类似,这里不赘述
+# 子组的操作跟目录类似,这里不赘述
 grp = f['/group']
 
 # 直接从文件索引数据集
@@ -1171,7 +1256,7 @@ data = dset[:]
 attrs = dset.attrs
 fill_value = attrs['_FillValue']
 </code></pre>
-<p>值得注意的是，在 h5py 中，文件、组，和属性都是类似于词典的对象，可以活用<code>keys()</code>、<code>values()</code>、<code>items()</code> 等方法，还可以直接索引键名来进行探索。另外 h5py 不包含 masked array 的功能，需要手动处理。</p>
+<p>值得注意的是，在 <code>h5py</code> 中，文件、组，和属性都是类似于词典的对象，可以活用<code>keys()</code>、<code>values()</code>、<code>items()</code> 等方法，还可以直接索引键名来进行探索。另外 <code>h5py</code> 不包含 masked array 的功能，需要手动处理。</p>
 <p><strong>参考链接</strong><br>
 <a href="http://docs.h5py.org/en/stable/index.html">h5py docs</a><br>
 <a href="https://support.hdfgroup.org/products/hdf5_tools/h4toh5/h4vsh5.html">HDF VS. HDF5</a><br>
@@ -1332,42 +1417,6 @@ for i in range(4):
 <img src="https://ZhaJiMan.github.io/post-images/1578140392516.png" alt="" loading="lazy"></p>
 <h3 id="参考">参考</h3>
 <p><a href="https://en.wikipedia.org/wiki/Great-circle_distance">Wikipedia: Great-circle distance</a></p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[用 FFmpeg 把图片转为视频]]></title>
-        <id>https://ZhaJiMan.github.io/post/ffmpeg-images/</id>
-        <link href="https://ZhaJiMan.github.io/post/ffmpeg-images/">
-        </link>
-        <updated>2019-12-18T11:38:42.000Z</updated>
-        <content type="html"><![CDATA[<h3 id="imagemagick-方法">ImageMagick 方法</h3>
-<p>要把一系列带编号的、分辨率相同的图片转化为动图，我之前采用的方法是通过 Linux 下的 <code>convert</code> 命令（在 Windows 下就是 <code>magick</code>）来输出动图</p>
-<pre><code>convert -delay 50 *.png -loop 0 out.gif
-convert -layers Optimize out.gif out_opt.gif
-</code></pre>
-<p><code>-delay 50</code>：延迟 50*10 ms，即 0.5 秒 一张图，fps 为 2。<br>
-<code>-loop 0</code>：循环播放 n 轮，n=0 表示无限循环。<br>
-<code>-layers Optimize</code>：对 gif 图的每一层采用 Optimize 方法进行优化，能够稍微降低文件体积。</p>
-<p>但是当原有的 png 图片很大时，得到的 gif 体积会很大，并且图片很多时，处理速度也会很慢。而使用 FFmpeg 的话，处理速度和文件体积都会大幅改善。因此下面介绍 FFmpeg 把图片转为视频的方法。</p>
-<p>关于 ImageMagick 的详细用法见<br>
-<a href="https://www.cnblogs.com/lfri/p/11601211.html">ImageMagick 的安装及使用</a><br>
-<a href="https://blog.csdn.net/qwsamxy/article/details/50530900">【ImageMagick】用convert制作gif图片动画</a></p>
-<h3 id="ffmpeg-方法">FFmpeg 方法</h3>
-<p>FFmpeg 是一套专门用于处理音频和视频的开源程序，Windows 和 Linux 下均可下载。这里介绍其中的命令行工具 <code>ffmpeg</code> 的方法。图片转视频的命令为</p>
-<pre><code>ffmpeg -f image2 -pattern_type glob -framerate 20 -i '*.png' -c:v libx264 -pix_fmt yuv420p -s 800x800 out.mp4
-</code></pre>
-<p><code>-f image2</code>：指定输入输出文件的格式，这里为图片文件指定了 image2。一般来说 FFmpeg 会自动推断文件类型，这个选项可以忽略。<br>
-<code>-pattern_type glob</code>：指定 image2 接收到的图片名字的模式。这里选用 glob，能够支持通配符（即 *）的使用。<br>
-<code>framerate 20</code>：设置视频流的帧率（frames per second），这里为每秒 20 张图。<br>
-<code>-i</code>：这个选项后接输入文件的名字。<br>
-<code>-c:v libx264</code>：<code>-c</code> 能指定输出（输入）的编码（解码）方式。<code>-c:v</code> 指定源为视频（video）源，由于放在输入的图片名后面，所以这里是为输出的视频指定 x264 编码器。这个编码输出的视频效果比没有指定 <code>-c</code> 选项的默认情况要强不少。<br>
-<code>-pix_fmt yuv420p</code>：指定像素的色彩格式为 yuv420p。默认情况下是 yuv444p，画面似乎更好，但文件体积也会增大一些。<br>
-<code>-s 800x800</code>：指定输出视频的分辨率为 800x800（宽x高）。可以通过降低分辨率的方法缩小视频体积。<br>
-<code>-vf scale=iw/2:ih/2</code>：除了上面提到的 <code>-s</code> 方法，还可以用 scale filter 按输入图片的分辨率（iw 和 ih）等比例缩放。例如这里指定分辨率缩减为一半。</p>
-<p>使用上面的命令就能快速生成动态的视频。更多参数和用法可以参考<br>
-<a href="https://ffmpeg.org/ffmpeg.html">ffmpeg Documentation</a><br>
-<a href="https://ffmpeg.org/ffmpeg-formats.html#image2-1">FFmpeg Formats Documentation</a><br>
-<a href="http://einverne.github.io/post/2015/12/ffmpeg-first.html">ffmpeg 入门笔记</a></p>
 ]]></content>
     </entry>
 </feed>

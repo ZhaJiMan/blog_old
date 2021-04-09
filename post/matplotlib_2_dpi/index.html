@@ -1,0 +1,260 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>Matplotlib 经验（2）：导出高 DPI 的图片 | 炸 鸡 人</title>
+<meta name="description" content="炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://ZhaJiMan.github.io/favicon.ico?v=1617962632486">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://ZhaJiMan.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://ZhaJiMan.github.io">
+        <img class="avatar" src="https://ZhaJiMan.github.io/images/avatar.png?v=1617962632486" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://ZhaJiMan.github.io">
+        <h1 class="site-title">炸 鸡 人</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+            <div class="feature-container" style="background-image: url('https://ZhaJiMan.github.io/post-images/matplotlib_2_dpi.png')">
+            </div>
+          
+          <h2 class="post-title">Matplotlib 经验（2）：导出高 DPI 的图片</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2021-04-08</span>
+            
+          </div>
+          <div class="post-content">
+            <h2 id="前言">前言</h2>
+<p>昨天一同学问我怎么把已经画好的图片的 DPI 改到 300，以满足期刊对图片清晰度的要求。上网搜索一番后才发现，虽然我经常在 Matplotlib 中用 <code>dpi</code> 参数来调节图片清晰度，但实际上我对这个概念半懂不懂。这次借这个契机调研和总结一下相关的知识。本文将会依次介绍</p>
+<ul>
+<li>分辨率和 DPI 是什么。</li>
+<li>DPI 和清晰度的关系。</li>
+<li>如何导出期刊要求的高 DPI 图片。</li>
+</ul>
+<h2 id="分辨率">分辨率</h2>
+<p>这里的图片指的是位图（bitmap），一张图片由无数个彩色的小像素点组成，Matplotlib 支持的位图格式有 png、jpg、jpeg、png、tiff 等。我们常用分辨率（resolution）来描述图片的大小，例如说一张图片的分辨率是 800 x 400，即指这张图片宽 800 个像素，高 400 个像素。Windows 对一张 jpg 图片打开右键菜单，在“属性”里的“详细信息”里就能看到图片的分辨率，如下图所示</p>
+<figure data-type="image" tabindex="1"><img src="https://ZhaJiMan.github.io/post-images/1617888460638.png" alt="" loading="lazy"></figure>
+<p>在其它领域里分辨率一词通常描述仪器分辨细节的精细程度，而图片的分辨率仅仅是指图片大小，所以对于图片大小来说，一个更准确的术语是 pixel dimensions。不过既然 Windows 的菜单里都这么显示了，那后文将继续沿用分辨率的说法。</p>
+<h2 id="尺寸">尺寸</h2>
+<p>除了用像素数，图片的尺寸还可以用物理单位来描述，用来指定打印时图片在纸上的大小。例如对于一张分辨率为 800 x 400 的图片，我们希望维持原宽高比打印出来，那么可以设定其尺寸为宽 8 英寸，高 4 英寸（1 英寸约为 2.54 厘米）。这个尺寸可以任意设定，毕竟想打印多大完全由你决定。</p>
+<h2 id="dpi-和-ppi">DPI 和 PPI</h2>
+<p>如果说分辨率和尺寸是长度量的话，那么 DPI 和 PPI 就是密度量。它们的定义如下</p>
+<ul>
+<li>
+<p>DPI（dots per inch）：每英寸长度里含有的打印机墨点数。</p>
+</li>
+<li>
+<p>PPI（pixels per inch）：每英寸长度里含有的像素数。</p>
+</li>
+</ul>
+<p>DPI 表现的是打印机的精细程度。对于同样大小的纸张，打印机的 DPI 更高，打印时就会用上更多墨点，那么打印效果自然也更好。</p>
+<p>电子设备借鉴了打印设备里 DPI 的概念，用 PPI 来衡量像素点的物理尺寸。PPI 对于显示器和图片的意义稍有不同，下面来分别介绍。首先，显示器的 PPI 计算公式为</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">P</mi><mi mathvariant="normal">I</mi></mrow><mo>=</mo><mi mathvariant="normal">对</mi><mi mathvariant="normal">角</mi><mi mathvariant="normal">线</mi><mi mathvariant="normal">像</mi><mi mathvariant="normal">素</mi><mi mathvariant="normal">数</mi><mi mathvariant="normal">/</mi><mi mathvariant="normal">对</mi><mi mathvariant="normal">角</mi><mi mathvariant="normal">线</mi><mi mathvariant="normal">物</mi><mi mathvariant="normal">理</mi><mi mathvariant="normal">长</mi><mi mathvariant="normal">度</mi></mrow><annotation encoding="application/x-tex">\rm{PPI}=对角线像素数/对角线物理长度
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord"><span class="mord mathrm">P</span><span class="mord mathrm">P</span><span class="mord mathrm">I</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord cjk_fallback">对</span><span class="mord cjk_fallback">角</span><span class="mord cjk_fallback">线</span><span class="mord cjk_fallback">像</span><span class="mord cjk_fallback">素</span><span class="mord cjk_fallback">数</span><span class="mord mathrm">/</span><span class="mord cjk_fallback">对</span><span class="mord cjk_fallback">角</span><span class="mord cjk_fallback">线</span><span class="mord cjk_fallback">物</span><span class="mord cjk_fallback">理</span><span class="mord cjk_fallback">长</span><span class="mord cjk_fallback">度</span></span></span></span></span></span></p>
+<p>给定屏幕大小，PPI 更高则屏幕含有的像素数更多，那么显示效果会更好。例如苹果的 iPhone 就强调其 Retina 屏幕的像素密度高达 326 PPI，有着超出人眼识别能力的细腻效果（广告语看看就得了）。</p>
+<p>对图片来说，PPI 和 DPI 这两个术语经常混淆使用，例如 Windows 菜单就称呼图片单位英寸的像素数为 DPI，那么后文也会沿用这一说法。图片 DPI 的计算方法是</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mrow><mi mathvariant="normal">水</mi><mi mathvariant="normal">平</mi><mi mathvariant="normal">D</mi><mi mathvariant="normal">P</mi><mi mathvariant="normal">I</mi></mrow><mo>=</mo><mi mathvariant="normal">宽</mi><mi mathvariant="normal">度</mi><mi mathvariant="normal">像</mi><mi mathvariant="normal">素</mi><mi mathvariant="normal">数</mi><mi mathvariant="normal">/</mi><mi mathvariant="normal">物</mi><mi mathvariant="normal">理</mi><mi mathvariant="normal">宽</mi><mi mathvariant="normal">度</mi></mrow><annotation encoding="application/x-tex">\rm{水平DPI}=宽度像素数/物理宽度
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord"><span class="mord cjk_fallback">水</span><span class="mord cjk_fallback">平</span><span class="mord mathrm">D</span><span class="mord mathrm">P</span><span class="mord mathrm">I</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord cjk_fallback">宽</span><span class="mord cjk_fallback">度</span><span class="mord cjk_fallback">像</span><span class="mord cjk_fallback">素</span><span class="mord cjk_fallback">数</span><span class="mord mathrm">/</span><span class="mord cjk_fallback">物</span><span class="mord cjk_fallback">理</span><span class="mord cjk_fallback">宽</span><span class="mord cjk_fallback">度</span></span></span></span></span></span></p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mrow><mi mathvariant="normal">垂</mi><mi mathvariant="normal">直</mi><mi mathvariant="normal">D</mi><mi mathvariant="normal">P</mi><mi mathvariant="normal">I</mi></mrow><mo>=</mo><mi mathvariant="normal">高</mi><mi mathvariant="normal">度</mi><mi mathvariant="normal">像</mi><mi mathvariant="normal">素</mi><mi mathvariant="normal">数</mi><mi mathvariant="normal">/</mi><mi mathvariant="normal">物</mi><mi mathvariant="normal">理</mi><mi mathvariant="normal">高</mi><mi mathvariant="normal">度</mi></mrow><annotation encoding="application/x-tex">\rm{垂直DPI}=高度像素数/物理高度
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord"><span class="mord cjk_fallback">垂</span><span class="mord cjk_fallback">直</span><span class="mord mathrm">D</span><span class="mord mathrm">P</span><span class="mord mathrm">I</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord cjk_fallback">高</span><span class="mord cjk_fallback">度</span><span class="mord cjk_fallback">像</span><span class="mord cjk_fallback">素</span><span class="mord cjk_fallback">数</span><span class="mord mathrm">/</span><span class="mord cjk_fallback">物</span><span class="mord cjk_fallback">理</span><span class="mord cjk_fallback">高</span><span class="mord cjk_fallback">度</span></span></span></span></span></span></p>
+<p>可以看出，DPI 就是将图片从像素尺寸缩放到物理尺寸的比值。另外，DPI 的倒数即每个像素的单位物理长度，因为我们总是希望像素的物理形状是正方形，所以大多数情况下水平 DPI 就等于垂直 DPI，这样打印出来的图片也能维持原有的宽高比。</p>
+<p>一些图片格式会记录图片的 DPI 值，Windows 下图片的右键菜单属性栏里便能看到。我们在对图片进行排版或打印时，软件会根据图片的分辨率和 DPI 自动设定图片的纸上尺寸。不过如果你想把图片打印大点，那么根据定义计算，图片 DPI 会变小；想打印小点，图片 DPI 就会变大——没错，DPI 并不是图片的固有属性，真正决定 DPI 的是图片分辨率和你想要的纸上尺寸，右键菜单属性栏里的数值屁用没有。这一点还可以从两个例子说明，一是 png 格式压根不含 DPI 值，你得根据打印需求自己去算；二是可以用 Pillow 库直接修改图片的 DPI 值</p>
+<pre><code class="language-Python">from PIL import Image
+
+# test1.tif的原始DPI为50
+img = Image.open('test1.tif')
+img.save('test2.tif', dpi=(300, 300), compression=None)
+</code></pre>
+<p>用上面的代码可以把一张特别糊的图片改成 300 DPI 的“出版级”图片，然而图片清晰度和体积一点没变，依旧说明图片元信息（metadata）里的 DPI 值只是个摆设。</p>
+<h2 id="dpi-与清晰度">DPI 与清晰度</h2>
+<p>我们可能听过 DPI 越高越清晰的说法，这里需要明确，DPI 是打印机、显示器，还是图片的 DPI？清晰是指什么东西清晰？</p>
+<p>原则上打印机的 DPI 越高，打印出的纸质图片越清晰；显示器的 PPI 越高，显示效果越好。对图片则要分情况讨论。如果给定图片分辨率，DPI 越高，打印出来的纸质图片越小，虽然越小越不容易看出瑕疵，但那也不能说成是打印效果更好。如果给定纸上尺寸，DPI 越高，图片的像素数越多，于是问题转化成了：图片像素越多，就会越清晰吗？</p>
+<p>答案是不一定，示意图如下（转自知乎专栏 <a href="https://zhuanlan.zhihu.com/p/43108622">影响图像画质的因素：图片的分辨率和像素浅谈</a>）</p>
+<figure data-type="image" tabindex="2"><img src="https://ZhaJiMan.github.io/post-images/1617956015248.jpg" alt="" loading="lazy"></figure>
+<p>每一排从右往左，采样分辨率从 50 x 50 降至 1 x 1，清晰度显著下降，说明像素越多越清晰；但第一排到第二排将分辨率用 PS 放大到 10 倍，清晰度并没有显著提高，只是像加了柔和滤镜一样。就我个人的理解，只有在从源头生成图片的过程中才有像素越多越清晰的规律，例如拍照时采样了更多像素点、画画时用更多像素描绘细节等；如果只是对图片进行后处理来增多像素的话就不一定能更清晰，例如各种插值方法。</p>
+<p>回到前面的问题，给定纸上尺寸时，DPI 越高图片像素数越多，说明图片本身<strong>很可能</strong>会更清晰，那么在不超出打印机 DPI 水平的前提下，打印出来的纸质图片也很可能更清晰。</p>
+<h2 id="期刊的-300-dpi-要求">期刊的 300 DPI 要求</h2>
+<p>由上一节的讨论，我们便能理解期刊为什么对配图的 DPI 有要求了，因为高 DPI 预示着配图在杂志上的显示效果应该会很好（无论是纸质版还是电子版）。下面以 AGU（美国地球物理学会）对位图的要求为例，用 Matplotlib 演示导出高 DPI 图片的方法。</p>
+<figure data-type="image" tabindex="3"><img src="https://ZhaJiMan.github.io/post-images/1617958065786.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="4"><img src="https://ZhaJiMan.github.io/post-images/1617958853112.png" alt="" loading="lazy"></figure>
+<p>要求 tif 和 jpg 格式的图片在期刊的纸面尺寸上有 300 - 600 的 DPI，tif 图采用 LZW 压缩，jpg 图选择最高的 quality。1/4 版面大小的图片尺寸是 95 x 115 mm。程序如下</p>
+<pre><code class="language-Python">import matplotlib.pyplot as plt
+
+w = 95 / 10 / 2.54
+h = 115 / 10 / 2.54
+fig = plt.figure(figsize=(w, h))
+
+fig.savefig('output.tif', dpi=600, pil_kwargs={'compression': 'tiff_lzw'})
+fig.savefig('output.jpg', dpi=600, pil_kwargs={'quality': 95})
+</code></pre>
+<p><code>plt.figure</code> 函数的 <code>figsize</code> 参数要求单位为英寸，所以要先把版面尺寸的单位从毫米换算到英寸。<code>fig.savefig</code> 方法里可以直接指定 DPI，压缩方法这种与图片格式相关的参数需要传给 PIL 来实现。最后能得到两张分辨率为 2244 x 2716，600 DPI 的图片。需要注意如果 <code>dpi</code> 参数的值太高，生成的图片的分辨率和体积太大。</p>
+<p>在 Matplotlib 中，给定 <code>dpi</code>，<code>figsize</code> 越大，绘制同一个元素时会用到更多像素，所以最后导出的图片会更清晰。此即前面提过的从源头上生成清晰的图片。而后处理增加 DPI 的方法也有：导入 PS 中插值放大；粘贴到 PPT 修改 slide 的分辨率和 DPI，再导出整张 slide；用 AI 把位图转换成矢量图等。后处理方法的问题在于，如果处理前图片就很糊，那么处理后只能得到高 DPI 的假高清图。</p>
+<p>当然，最最简单的方式是，从一开始就不要画位图，全部以矢量图的格式导出（eps、pdf 等），这样就完全没有本文中的问题了，所以本文白写了（悲）。</p>
+<h2 id="额外说明">额外说明</h2>
+<p>额外说明一点搜到的实用小知识。</p>
+<p>Matplotlib 中的线宽和字体字号是以磅（point）为单位的，有</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>1</mn><mtext> </mtext><mrow><mrow><mi mathvariant="normal">p</mi><mi mathvariant="normal">t</mi></mrow><mo>=</mo><mn>1</mn><mi mathvariant="normal">/</mi><mn>72</mn><mtext> </mtext><mrow><mi mathvariant="normal">i</mi><mi mathvariant="normal">n</mi><mi mathvariant="normal">c</mi><mi mathvariant="normal">h</mi></mrow></mrow></mrow><annotation encoding="application/x-tex">1\ \rm{pt}=1/72\ \rm{inch}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mspace"> </span><span class="mord"><span class="mord"><span class="mord mathrm">p</span><span class="mord mathrm">t</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord mathrm">1</span><span class="mord mathrm">/</span><span class="mord mathrm">7</span><span class="mord mathrm">2</span><span class="mspace"> </span><span class="mord"><span class="mord"><span class="mord mathrm">i</span><span class="mord mathrm">n</span><span class="mord mathrm">c</span><span class="mord mathrm">h</span></span></span></span></span></span></span></span></p>
+<p>例如，<code>linewidth=72</code> 时，线宽恰好为 1 英寸。注意这是个物理单位，对应于纸上长度。所以增大 <code>figsize</code> 时图中元素会显得更小更细，而增大 <code>dpi</code> 时图中元素大小不变，但图片像素更多、显示效果更清晰。</p>
+<h2 id="参考资料">参考资料</h2>
+<p><a href="https://en.wikipedia.org/wiki/Dots_per_inch">Dots per inch - Wikipedia</a><br>
+<a href="https://stackoverflow.com/questions/47633546/relationship-between-dpi-and-figure-size">Relationship between dpi and figure size</a><br>
+<a href="https://www.radiologytutor.com/index.php/cases/miscellaneous/63-how-to-ensure-your-images-meet-the-minimum-requirement-for-printing-dpi-explained">How to ensure your images meet the minimum requirement for printing - DPI explained</a><br>
+<a href="https://www.agu.org/Publish-with-AGU/Publish/Author-Resources/Graphic-Requirements">GRAPHIC REQUIREMENTS - AGU</a><br>
+<a href="https://www.zhihu.com/question/23770739/answer/25619192">DPI 和 PPI 的区别是什么？</a><br>
+<a href="https://www.zhihu.com/question/340341384/answer/789781560">照片的分辨率300dpi那么它的水平分辨率和垂直分辨率分别是多少？</a></p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://ZhaJiMan.github.io/post/python_file_directory/">
+              <h3 class="post-title">
+                下一篇：Python 中操作文件和目录的路径
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+        
+          <div id="gitalk-container"></div>
+        
+
+        
+      
+
+      <div class="site-footer">
+  <div class="slogan">炸鸡是指以油炸方式烹调的鸡肉。炸鸡有很多不同的油炸种类，例如原件连皮连骨的鸡件，或者已去皮去骨的鸡肉块。不同国家和地区的炸鸡，均有其独特的特色。</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://ZhaJiMan.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'd3e98a2219dd32298c8a',
+        clientSecret: '04b6ce88dc40c267a998b38f9b245b259b91dc2b',
+        repo: 'ZhaJiMan.github.io',
+        owner: 'ZhaJiMan',
+        admin: ['ZhaJiMan'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>
